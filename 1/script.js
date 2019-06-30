@@ -1,3 +1,5 @@
+var WIDTH = 300;
+var HEIGHT = 300;
 class Simulation {
   constructor(width, height) {
     this.width = width;
@@ -20,11 +22,24 @@ class Simulation {
       for (var x = 0; x < this.width; x++) {
         if (y > 0) {
           if (x > 1) {
-            this.matrix[y][x] += this.matrix[y - 1][x - 1] / 3;
+            this.matrix[y][x] += this.matrix[y - 1][x - 1] / 4;
           }
-          this.matrix[y][x] += this.matrix[y - 1][x] / 3;
-          if (x < this.width) {
-            this.matrix[y][x] += this.matrix[y - 1][x + 1] / 3;
+          this.matrix[y][x] += this.matrix[y - 1][x] / 2;
+          if (x < this.width - 2) {
+            this.matrix[y][x] += this.matrix[y - 1][x + 1] / 4;
+          }
+          this.matrix[y][x] /= 2.5;
+          if (Math.random() < 0.25) {
+            this.matrix[y][x] = this.matrix[y - 1][x];
+          }
+          //   sparks
+          if (this.matrix[y][x] > 0) {
+            if (Math.random() < 0.01) {
+              this.matrix[y][x] *= 4;
+              if (this.matrix[y][x] > 1) {
+                this.matrix[y][x] = 1;
+              }
+            }
           }
         }
       }
@@ -33,15 +48,30 @@ class Simulation {
   }
 }
 
+function drawSimulation(ctx, sim) {
+  var cellSize = 10;
+  ctx.fillStyle = `rgb(255,255,255)`;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  for (var y = 0; y < sim.height; y++) {
+    for (var x = 0; x < sim.width; x++) {
+      var alpha = sim.matrix[y][x];
+      ctx.fillStyle = `rgb(255,0,0,${alpha})`;
+      ctx.fillRect(x * cellSize, HEIGHT - y * cellSize, cellSize, cellSize);
+    }
+  }
+}
+
 function startDrawing() {
-  var sim = new Simulation(10, 10);
+  var sim = new Simulation(30, 30);
   var canvas = document.getElementById("myCanvas");
   if (canvas.getContext) {
     var ctx = canvas.getContext("2d");
     setInterval(() => {
       sim.step();
-      draw(ctx);
-    }, 1000);
+      drawSimulation(ctx, sim);
+      //   draw(ctx);
+    }, 100);
   } else {
     console.log("Browser does not support canvas???");
   }
@@ -53,6 +83,5 @@ function draw(ctx) {
   var b = Math.round(Math.random() * 255);
   //   console.log(`rgb(${r},${g},${b})`);
   ctx.fillStyle = `rgb(${r},${g},${b})`;
-  Math.random() * 300;
-  ctx.fillRect(Math.random() * 300, Math.random() * 300, 50, 50);
+  ctx.fillRect(Math.random() * WIDTH, Math.random() * HEIGHT, 50, 50);
 }
