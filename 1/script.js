@@ -2,6 +2,14 @@ var WIDTH = 300;
 var HEIGHT = 300;
 var CELLSIZE = 10;
 var SIMWIDTH = 30;
+
+var CHANCE_PARTICLE_STATIC = 0.01;
+var CHANCE_PARTICLE_SUSTAIN = 0.25;
+var CHANCE_PARTICLE_RESURRECT = 0.005;
+var PARTICLE_COLOR_R = 255;
+var PARTICLE_COLOR_G = 255;
+var PARTICLE_COLOR_B = 255;
+
 class Simulation {
   constructor(width, height) {
     this.width = width;
@@ -23,7 +31,7 @@ class Simulation {
     for (var y = this.height - 1; y > 0; y--) {
       for (var x = 0; x < this.width; x++) {
         if (y > 0) {
-          if (Math.random() < 0.01) {
+          if (Math.random() < CHANCE_PARTICLE_STATIC) {
             //chance to sustain brightness
             this.matrix[y][x] += this.matrix[y - 1][x];
           } else {
@@ -36,14 +44,12 @@ class Simulation {
               this.matrix[y][x] += this.matrix[y - 1][x + 1] / 3;
             }
             this.matrix[y][x] /= 2.5;
-            if (Math.random() < 0.25) {
+            if (Math.random() < CHANCE_PARTICLE_SUSTAIN) {
               this.matrix[y][x] = this.matrix[y - 1][x];
             }
             //   sparks
-            if (this.matrix[y - 1][x] > 0.05) {
-              if (Math.random() < 0.005) {
-                this.matrix[y][x] = 1;
-              }
+            if (Math.random() < CHANCE_PARTICLE_RESURRECT) {
+              this.matrix[y][x] = 1;
             }
           }
         }
@@ -60,7 +66,7 @@ function drawSimulation(ctx, sim) {
   for (var y = 0; y < sim.height; y++) {
     for (var x = 0; x < sim.width; x++) {
       var alpha = sim.matrix[y][x];
-      ctx.fillStyle = `rgb(255,0,0,${alpha})`;
+      ctx.fillStyle = `rgb(${PARTICLE_COLOR_R},${PARTICLE_COLOR_G},${PARTICLE_COLOR_B},${alpha})`;
       ctx.fillRect(x * CELLSIZE, HEIGHT - y * CELLSIZE, CELLSIZE, CELLSIZE);
     }
   }
@@ -69,6 +75,30 @@ function drawSimulation(ctx, sim) {
 function startDrawing() {
   var sim = new Simulation(SIMWIDTH, SIMWIDTH);
   var canvas = document.getElementById("myCanvas");
+
+  var redElement = document.getElementById("redRange");
+  var greenElement = document.getElementById("greenRange");
+  var blueElement = document.getElementById("blueRange");
+
+  var inputStaticChance = document.getElementById(
+    "element_CHANCE_PARTICLE_STATIC"
+  );
+  var inputSustainChance = document.getElementById(
+    "element_CHANCE_PARTICLE_SUSTAIN"
+  );
+  var inputResurrectChance = document.getElementById(
+    "element_CHANCE_PARTICLE_RESURRECT"
+  );
+  // start UI loop
+  setInterval(() => {
+    PARTICLE_COLOR_R = redElement.value;
+    PARTICLE_COLOR_G = greenElement.value;
+    PARTICLE_COLOR_B = blueElement.value;
+    CHANCE_PARTICLE_STATIC = inputStaticChance.value;
+    CHANCE_PARTICLE_SUSTAIN = inputSustainChance.value;
+    CHANCE_PARTICLE_RESURRECT = inputResurrectChance.value;
+  }, 100);
+
   if (canvas.getContext) {
     var ctx = canvas.getContext("2d");
     ctx.canvas.width = WIDTH;
