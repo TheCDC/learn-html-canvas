@@ -1,5 +1,7 @@
 var WIDTH = 300;
 var HEIGHT = 300;
+var CELLSIZE = 10;
+var SIMWIDTH = 30;
 class Simulation {
   constructor(width, height) {
     this.width = width;
@@ -52,7 +54,6 @@ class Simulation {
 }
 
 function drawSimulation(ctx, sim) {
-  var cellSize = 10;
   ctx.fillStyle = `rgb(255,255,255)`;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -60,16 +61,18 @@ function drawSimulation(ctx, sim) {
     for (var x = 0; x < sim.width; x++) {
       var alpha = sim.matrix[y][x];
       ctx.fillStyle = `rgb(255,0,0,${alpha})`;
-      ctx.fillRect(x * cellSize, HEIGHT - y * cellSize, cellSize, cellSize);
+      ctx.fillRect(x * CELLSIZE, HEIGHT - y * CELLSIZE, CELLSIZE, CELLSIZE);
     }
   }
 }
 
 function startDrawing() {
-  var sim = new Simulation(30, 30);
+  var sim = new Simulation(SIMWIDTH, SIMWIDTH);
   var canvas = document.getElementById("myCanvas");
   if (canvas.getContext) {
     var ctx = canvas.getContext("2d");
+    ctx.canvas.width = WIDTH;
+    ctx.canvas.height = HEIGHT;
     setInterval(() => {
       sim.step();
       drawSimulation(ctx, sim);
