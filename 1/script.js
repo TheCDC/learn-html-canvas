@@ -21,22 +21,25 @@ class Simulation {
     for (var y = this.height - 1; y > 0; y--) {
       for (var x = 0; x < this.width; x++) {
         if (y > 0) {
-          if (x > 1) {
-            this.matrix[y][x] += this.matrix[y - 1][x - 1] / 4;
-          }
-          this.matrix[y][x] += this.matrix[y - 1][x] / 2;
-          if (x < this.width - 2) {
-            this.matrix[y][x] += this.matrix[y - 1][x + 1] / 4;
-          }
-          this.matrix[y][x] /= 2.5;
-          if (Math.random() < 0.25) {
-            this.matrix[y][x] = this.matrix[y - 1][x];
-          }
-          //   sparks
-          if (this.matrix[y][x] > 0) {
-            if (Math.random() < 0.01) {
-              this.matrix[y][x] *= 4;
-              if (this.matrix[y][x] > 1) {
+          if (Math.random() < 0.01) {
+            //chance to sustain brightness
+            this.matrix[y][x] += this.matrix[y - 1][x];
+          } else {
+            //decaying brightness
+            if (x > 1) {
+              this.matrix[y][x] += this.matrix[y - 1][x - 1] / 3;
+            }
+            this.matrix[y][x] += this.matrix[y - 1][x] / 2;
+            if (x < this.width - 2) {
+              this.matrix[y][x] += this.matrix[y - 1][x + 1] / 3;
+            }
+            this.matrix[y][x] /= 2.5;
+            if (Math.random() < 0.25) {
+              this.matrix[y][x] = this.matrix[y - 1][x];
+            }
+            //   sparks
+            if (this.matrix[y - 1][x] > 0.05) {
+              if (Math.random() < 0.005) {
                 this.matrix[y][x] = 1;
               }
             }
@@ -44,7 +47,7 @@ class Simulation {
         }
       }
     }
-    console.log(this.matrix);
+    // console.log(this.matrix);
   }
 }
 
@@ -71,7 +74,7 @@ function startDrawing() {
       sim.step();
       drawSimulation(ctx, sim);
       //   draw(ctx);
-    }, 100);
+    }, 50);
   } else {
     console.log("Browser does not support canvas???");
   }
