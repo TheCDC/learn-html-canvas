@@ -6,9 +6,17 @@ var SIMWIDTH = 30;
 var CHANCE_PARTICLE_STATIC = 0.01;
 var CHANCE_PARTICLE_SUSTAIN = 0.25;
 var CHANCE_PARTICLE_RESURRECT = 0.005;
-var PARTICLE_COLOR_R = 255;
-var PARTICLE_COLOR_G = 255;
-var PARTICLE_COLOR_B = 255;
+var PARTICLE_COLOR = { r: 0, g: 0, b: 0 };
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      }
+    : null;
+}
 
 class Simulation {
   constructor(width, height) {
@@ -66,7 +74,10 @@ function drawSimulation(ctx, sim) {
   for (var y = 0; y < sim.height; y++) {
     for (var x = 0; x < sim.width; x++) {
       var alpha = sim.matrix[y][x];
-      ctx.fillStyle = `rgb(${PARTICLE_COLOR_R},${PARTICLE_COLOR_G},${PARTICLE_COLOR_B},${alpha})`;
+
+      ctx.fillStyle = `rgb(${PARTICLE_COLOR['r']},${PARTICLE_COLOR['g']},${
+        PARTICLE_COLOR['b']
+      },${alpha})`;
       ctx.fillRect(x * CELLSIZE, HEIGHT - y * CELLSIZE, CELLSIZE, CELLSIZE);
     }
   }
@@ -76,9 +87,6 @@ function startDrawing() {
   var sim = new Simulation(SIMWIDTH, SIMWIDTH);
   var canvas = document.getElementById("myCanvas");
 
-  var redElement = document.getElementById("redRange");
-  var greenElement = document.getElementById("greenRange");
-  var blueElement = document.getElementById("blueRange");
 
   var inputStaticChance = document.getElementById(
     "element_CHANCE_PARTICLE_STATIC"
@@ -89,14 +97,13 @@ function startDrawing() {
   var inputResurrectChance = document.getElementById(
     "element_CHANCE_PARTICLE_RESURRECT"
   );
+  var inputRGB = document.getElementById("element_PARTICLE_COLOR");
   // start UI loop
   setInterval(() => {
-    PARTICLE_COLOR_R = redElement.value;
-    PARTICLE_COLOR_G = greenElement.value;
-    PARTICLE_COLOR_B = blueElement.value;
     CHANCE_PARTICLE_STATIC = inputStaticChance.value;
     CHANCE_PARTICLE_SUSTAIN = inputSustainChance.value;
     CHANCE_PARTICLE_RESURRECT = inputResurrectChance.value;
+    PARTICLE_COLOR = hexToRgb(inputRGB.value);
   }, 100);
 
   if (canvas.getContext) {
