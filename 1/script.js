@@ -2,11 +2,14 @@ var WIDTH = 300;
 var HEIGHT = 300;
 var CELLSIZE = 10;
 var SIMWIDTH = 30;
+var SIMHEIGHT = 30;
+
 
 var CHANCE_PARTICLE_STATIC = 0.01;
 var CHANCE_PARTICLE_SUSTAIN = 0.25;
 var CHANCE_PARTICLE_RESURRECT = 0.005;
 var PARTICLE_COLOR = { r: 0, g: 0, b: 0 };
+
 function hexToRgb(hex) {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
@@ -69,6 +72,8 @@ class Simulation {
 
 function drawSimulation(ctx, sim) {
   ctx.fillStyle = `rgb(255,255,255)`;
+  var WIDTH = ctx.canvas.width;
+  var HEIGHT = ctx.canvas.height;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
   for (var y = 0; y < sim.height; y++) {
@@ -84,7 +89,14 @@ function drawSimulation(ctx, sim) {
 }
 
 function startDrawing() {
-  var sim = new Simulation(SIMWIDTH, SIMWIDTH);
+  var url = new URL(window.location);
+  var w = url.searchParams.get("width");
+  var h = url.searchParams.get("height");
+  var width = w? w:SIMWIDTH
+  var height = h? h:SIMHEIGHT
+  console.log('width=',w,' height=',h)
+
+  var sim = new Simulation(width, height);
   var canvas = document.getElementById("myCanvas");
 
 
@@ -108,8 +120,8 @@ function startDrawing() {
 
   if (canvas.getContext) {
     var ctx = canvas.getContext("2d");
-    ctx.canvas.width = WIDTH;
-    ctx.canvas.height = HEIGHT;
+    ctx.canvas.width = width*CELLSIZE;
+    ctx.canvas.height = height*CELLSIZE;
     setInterval(() => {
       sim.step();
       drawSimulation(ctx, sim);
