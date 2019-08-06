@@ -9,7 +9,7 @@ class Simulation {
     this.dBrightness = 0;
     this.frames = new Array(10).fill(0);
     this.movingAverage = 0;
-    this.pBrightDark = 0.1;
+    this.pBrightDark = 0.05;
     this.pDarkbright = 0.3;
   }
   step() {
