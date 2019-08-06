@@ -1,4 +1,3 @@
-
 // define a class to contain all simulation state and parameters
 class Simulation {
   constructor() {
@@ -11,7 +10,7 @@ class Simulation {
     this.movingAverage = 0; // moving average value
     this.pBrightDark = 0.05; //chance to transition to dark from light
     this.pDarkBright = 0.2; // chance to transition to bright from dark
-    this.mousex=150;
+    this.mousex = 150;
     this.mousey = 150;
   }
   step() {
@@ -34,21 +33,20 @@ class Simulation {
     this.movingAverage =
       (arr => arr.reduce((a, b) => a + b, 0))(this.frames) / this.frames.length;
   }
-  setMousePos(x,y){
-      this.mousex = x;
-      this.mousey = y;
+  setMousePos(x, y) {
+    this.mousex = x;
+    this.mousey = y;
   }
 }
 
 var sim = new Simulation();
 
-
 function drawSimulation(ctx, sim) {
   const X = sim.mousex;
-  const Y = sim.mousey-100;
+  const Y = sim.mousey - 100;
   // background
   ctx.fillStyle = `rgb(0,0,0)`;
-  ctx.fillRect(0, 0, 300, 300);
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   // flashlight
   var img = document.getElementById("img-flashlight");
   ctx.drawImage(img, X, Y, 100, 50);
@@ -75,11 +73,13 @@ function startDrawing() {
     // main loop
     setInterval(() => {
       sim.step();
-      drawSimulation(ctx, sim);
     }, sim.timeStep);
+    setInterval(() => {
+      drawSimulation(ctx, sim);
+    }, 1000 / 60);
   }
 }
 
-function mousemove(event){
-    sim.setMousePos(event.clientX, event.clientY);
+function mousemove(event) {
+  sim.setMousePos(event.clientX, event.clientY);
 }
