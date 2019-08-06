@@ -1,3 +1,4 @@
+// define a class to contain all simulation state and parameters
 class Simulation {
   constructor() {
     this.startTime = new Date().getTime();
@@ -5,43 +6,45 @@ class Simulation {
     this.brightness = 0;
     this.timeStep = 30; //milliseconds
     this.flickerChance = 1 / 10;
-    // this.freq = 2;
-    this.dBrightness = 0;
-    this.frames = new Array(10).fill(0);
-    this.movingAverage = 0;
-    this.pBrightDark = 0.05;
-    this.pDarkbright = 0.3;
+    this.frames = new Array(10).fill(0); //window for moving average
+    this.movingAverage = 0; // moving average value
+    this.pBrightDark = 0.05; //chance to transition to dark from light
+    this.pDarkBright = 0.2; // chance to transition to bright from dark
   }
   step() {
-    // this.brightness = Math.sin((new Date()).getTime()/(1000/this.freq)) >= 0.5 ? 1 : 0
+    //   simple markov model for dark-light transitions
     if (this.brightness === 1) {
       if (Math.random() < this.pBrightDark) {
         this.brightness = 0;
       }
     } else if (this.brightness === 0) {
-        if (Math.random() < this.pDarkbright ){
-            this.brightness = 1;
-        }
+      if (Math.random() < this.pDarkBright) {
+        this.brightness = 1;
+      }
     } else {
       console.error("brightness has invalid value of ", this.brightness);
     }
     // moving average for brightness
     this.frames.shift();
     this.frames.push(this.brightness);
+    // calculate average
     this.movingAverage =
       (arr => arr.reduce((a, b) => a + b, 0))(this.frames) / this.frames.length;
   }
 }
 
 function drawSimulation(ctx, sim) {
+  // background
   ctx.fillStyle = `rgb(0,0,0)`;
   ctx.fillRect(0, 0, 300, 300);
+  // flashlight
   var img = document.getElementById("img-flashlight");
   ctx.drawImage(img, 150, 150, 100, 50);
-//   console.log(sim.movingAverage);
+  //   console.log(sim.movingAverage);
+  //   light beam
   var b = sim.movingAverage * 255;
   ctx.fillStyle = `rgb(${b},${b},${b})`;
-  ctx.fillRect(50, 150, 100, 50);
+  ctx.fillRect(0, 150, 150, 50);
 }
 function startDrawing() {
   var canvas = document.getElementById("myCanvas");
