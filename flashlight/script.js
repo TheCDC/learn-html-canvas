@@ -34,6 +34,8 @@ class Simulation {
 }
 
 function drawSimulation(ctx, sim) {
+  const X = 150;
+  const Y = 150;
   // background
   ctx.fillStyle = `rgb(0,0,0)`;
   ctx.fillRect(0, 0, 300, 300);
@@ -45,10 +47,10 @@ function drawSimulation(ctx, sim) {
   var b = sim.movingAverage * 255;
   ctx.fillStyle = `rgb(${b},${b},${b})`;
   ctx.beginPath();
-  ctx.moveTo(0, 150-50);
-  ctx.lineTo(150, 150);
-  ctx.lineTo(150, 200);
-  ctx.lineTo(0, 200+50);
+  ctx.moveTo(0, Y - 50);
+  ctx.lineTo(X, Y);
+  ctx.lineTo(X, Y + 50);
+  ctx.lineTo(0, Y + 50 + 50);
   ctx.closePath();
   ctx.fill();
 
