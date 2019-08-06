@@ -44,7 +44,15 @@ function drawSimulation(ctx, sim) {
   //   light beam
   var b = sim.movingAverage * 255;
   ctx.fillStyle = `rgb(${b},${b},${b})`;
-  ctx.fillRect(0, 150, 150, 50);
+  ctx.beginPath();
+  ctx.moveTo(0, 150-50);
+  ctx.lineTo(150, 150);
+  ctx.lineTo(150, 200);
+  ctx.lineTo(0, 200+50);
+  ctx.closePath();
+  ctx.fill();
+
+  //   ctx.fillRect(0, 150, 150, 50);
 }
 function startDrawing() {
   var canvas = document.getElementById("myCanvas");
