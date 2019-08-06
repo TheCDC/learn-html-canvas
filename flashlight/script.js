@@ -6,7 +6,7 @@ class Simulation {
     this.brightness = 0;
     this.timeStep = 30; //milliseconds
     this.flickerChance = 1 / 10;
-    this.frames = new Array(10).fill(0); //window for moving average
+    this.frames = new Array(20).fill(0); //window for moving average
     this.movingAverage = 0; // moving average value
     this.pBrightDark = 0.05; //chance to transition to dark from light
     this.pDarkBright = 0.2; // chance to transition to bright from dark
