@@ -4,27 +4,34 @@ class Simulation {
     this.startTime = new Date().getTime();
     this.on = true;
     this.brightness = 0;
-    this.timeStep = 30; //milliseconds
+    this.timeStep = 1000/60; //milliseconds
     this.flickerChance = 1 / 10;
-    this.frames = new Array(20).fill(0); //window for moving average
+    this.frames = new Array(50).fill(0); //window for moving average
     this.movingAverage = 0; // moving average value
-    this.pBrightDark = 0.05; //chance to transition to dark from light
+    this.pBrightDark = 0.04; //chance to transition to dark from light
     this.pDarkBright = 0.2; // chance to transition to bright from dark
     this.mousex = 150;
     this.mousey = 150;
+    this.onState = false;
   }
   step() {
-    //   simple markov model for dark-light transitions
-    if (this.brightness === 1) {
-      if (Math.random() < this.pBrightDark) {
-        this.brightness = 0;
+    if (this.onState){
+
+      //   simple markov model for dark-light transitions
+      if (this.brightness === 1) {
+        if (Math.random() < this.pBrightDark) {
+          this.brightness = 0;
+        }
+      } else if (this.brightness === 0) {
+        if (Math.random() < this.pDarkBright) {
+          this.brightness = 1;
+        }
+      } else {
+        console.error("brightness has invalid value of ", this.brightness);
       }
-    } else if (this.brightness === 0) {
-      if (Math.random() < this.pDarkBright) {
-        this.brightness = 1;
-      }
-    } else {
-      console.error("brightness has invalid value of ", this.brightness);
+    }
+    else{
+      this.brightness = 0;
     }
     // moving average for brightness
     this.frames.shift();
@@ -36,6 +43,10 @@ class Simulation {
   setMousePos(x, y) {
     this.mousex = x;
     this.mousey = y;
+  }
+
+  toggleOnState(){
+    this.onState = !this.onState;
   }
 }
 
@@ -70,10 +81,11 @@ function startDrawing() {
   if (canvas.getContext) {
     var ctx = canvas.getContext("2d");
 
-    // main loop
+    // logic loop
     setInterval(() => {
       sim.step();
     }, sim.timeStep);
+    // render loop
     setInterval(() => {
       drawSimulation(ctx, sim);
     }, 1000 / 60);
@@ -82,4 +94,8 @@ function startDrawing() {
 
 function mousemove(event) {
   sim.setMousePos(event.clientX, event.clientY);
+}
+
+function mouseClick(event){
+  sim.toggleOnState();
 }
