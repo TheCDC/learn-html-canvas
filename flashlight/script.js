@@ -104,7 +104,7 @@ function startDrawing() {
 
 function mousemove(event) {
   var rect = document.getElementById("myCanvas").getBoundingClientRect();
-  sim.setMousePos(event.clientX-rect.left, event.clientY-rect.top);
+  sim.setMousePos(event.clientX - rect.left, event.clientY - rect.top);
 }
 
 function mouseClick(event) {
