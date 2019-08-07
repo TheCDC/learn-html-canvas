@@ -15,6 +15,7 @@ class Simulation {
     this.mousey = 150;
     this.onState = false;
 
+    this.beamSlope = 1 / 5;
 
     this.audio = new Audio('pen click.wav');
   }
@@ -76,10 +77,10 @@ function drawSimulation(ctx, sim) {
   var b = sim.movingAverage * 255;
   ctx.fillStyle = `rgb(${b},${b},${b})`;
   ctx.beginPath();
-  ctx.moveTo(0, Y - 50);
+  ctx.moveTo(0, Y - (X * sim.beamSlope));
   ctx.lineTo(X, Y);
   ctx.lineTo(X, Y + 50);
-  ctx.lineTo(0, Y + 50 + 50);
+  ctx.lineTo(0, Y + 50 + (X * sim.beamSlope));
   ctx.closePath();
   ctx.fill();
 
