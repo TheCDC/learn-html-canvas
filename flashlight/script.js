@@ -9,7 +9,7 @@ class Simulation {
     this.movingWindowSize = 100;
     this.frames = new Array(this.movingWindowSize).fill(0); //window for moving average
     this.movingAverage = 0; // moving average value
-    this.pBrightDark = 0.05; //chance to transition to dark from light
+    this.pBrightDark = 0.03; //chance to transition to dark from light
     this.pDarkBright = 0.2; // chance to transition to bright from dark
     this.mousex = 150;
     this.mousey = 150;
@@ -42,6 +42,7 @@ class Simulation {
     // calculate average
     this.movingAverage =
       (arr => arr.reduce((a, b) => a + b, 0))(this.frames) / this.frames.length;
+    // make brightness changes more pronounced with an exponent > 1
     this.movingAverage = Math.pow(this.movingAverage, 2);
   }
   setMousePos(x, y) {
@@ -56,7 +57,8 @@ class Simulation {
       this.frames = new Array(this.movingWindowSize).fill(0);
       this.movingAverage = 0;
     } else {
-      const rand = Math.random();
+      // make startup brightness random.
+      const rand = Math.random()/2 + 0.5;
       this.frames = new Array(this.movingWindowSize).fill(rand);
       this.movingAverage = rand;
     }
