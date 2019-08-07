@@ -4,18 +4,22 @@ class Simulation {
     this.startTime = new Date().getTime();
     this.on = true;
     this.brightness = 0;
-    this.timeStep = 1000/60; //milliseconds
+    this.timeStep = 1000 / 60; //milliseconds
     this.flickerChance = 1 / 10;
-    this.frames = new Array(50).fill(0); //window for moving average
+    this.movingWindowSize = 50;
+    this.frames = new Array(this.movingWindowSize).fill(0); //window for moving average
     this.movingAverage = 0; // moving average value
-    this.pBrightDark = 0.04; //chance to transition to dark from light
+    this.pBrightDark = 0.05; //chance to transition to dark from light
     this.pDarkBright = 0.2; // chance to transition to bright from dark
     this.mousex = 150;
     this.mousey = 150;
     this.onState = false;
+
+
+    this.audio = new Audio('pen click.wav');
   }
   step() {
-    if (this.onState){
+    if (this.onState) {
 
       //   simple markov model for dark-light transitions
       if (this.brightness === 1) {
@@ -30,7 +34,7 @@ class Simulation {
         console.error("brightness has invalid value of ", this.brightness);
       }
     }
-    else{
+    else {
       this.brightness = 0;
     }
     // moving average for brightness
@@ -45,8 +49,14 @@ class Simulation {
     this.mousey = y;
   }
 
-  toggleOnState(){
+  toggleOnState() {
+    this.audio.play();
     this.onState = !this.onState;
+    if (!this.onState) {
+      this.frames = new Array(this.movingWindowSize).fill(0)
+      this.movingAverage = 0;
+
+    }
   }
 }
 
@@ -96,6 +106,6 @@ function mousemove(event) {
   sim.setMousePos(event.clientX, event.clientY);
 }
 
-function mouseClick(event){
+function mouseClick(event) {
   sim.toggleOnState();
 }
