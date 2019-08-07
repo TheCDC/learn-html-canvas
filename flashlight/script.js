@@ -6,7 +6,7 @@ class Simulation {
     this.brightness = 0;
     this.timeStep = 1000 / 60; //milliseconds
     this.flickerChance = 1 / 10;
-    this.movingWindowSize = 50;
+    this.movingWindowSize = 100;
     this.frames = new Array(this.movingWindowSize).fill(0); //window for moving average
     this.movingAverage = 0; // moving average value
     this.pBrightDark = 0.05; //chance to transition to dark from light
@@ -17,11 +17,10 @@ class Simulation {
 
     this.beamSlope = 1 / 5;
 
-    this.audio = new Audio('pen click.wav');
+    this.audio = new Audio("pen click.wav");
   }
   step() {
     if (this.onState) {
-
       //   simple markov model for dark-light transitions
       if (this.brightness === 1) {
         if (Math.random() < this.pBrightDark) {
@@ -34,8 +33,7 @@ class Simulation {
       } else {
         console.error("brightness has invalid value of ", this.brightness);
       }
-    }
-    else {
+    } else {
       this.brightness = 0;
     }
     // moving average for brightness
@@ -44,6 +42,7 @@ class Simulation {
     // calculate average
     this.movingAverage =
       (arr => arr.reduce((a, b) => a + b, 0))(this.frames) / this.frames.length;
+    this.movingAverage = Math.pow(this.movingAverage, 2);
   }
   setMousePos(x, y) {
     this.mousex = x;
@@ -54,10 +53,45 @@ class Simulation {
     this.audio.play();
     this.onState = !this.onState;
     if (!this.onState) {
-      this.frames = new Array(this.movingWindowSize).fill(0)
+      this.frames = new Array(this.movingWindowSize).fill(0);
       this.movingAverage = 0;
-
+    } else {
+      const rand = Math.random();
+      this.frames = new Array(this.movingWindowSize).fill(rand);
+      this.movingAverage = rand;
     }
+  }
+}
+class SimulationPlotter {
+  constructor(ctx, sim) {
+    this.ctx = ctx;
+    this.sim = sim;
+    this.width = this.ctx.canvas.width;
+    this.height = this.ctx.canvas.height;
+    ctx.fillStyle = `rgb(0,0,0)`;
+  }
+  draw() {
+    this.ctx.globalCompositeOperation = "copy";
+    this.ctx.drawImage(this.ctx.canvas, -1, 0);
+    // reset back to normal for subsequent operations.
+    this.ctx.globalCompositeOperation = "source-over";
+
+    this.ctx.fillStyle = `rgb(0,255,0)`;
+
+    this.ctx.fillRect(
+      this.width - 1,
+      this.height - this.sim.movingAverage * this.height - 1,
+      1,
+      1
+    );
+
+    this.ctx.fillStyle = `rgb(255,0,0)`;
+
+    this.ctx.fillRect(this.width - 1, this.height - 1, 1, 1);
+
+    this.ctx.fillStyle = `rgb(52, 183, 235)`;
+
+    this.ctx.fillRect(this.width - 1, 0, 1, 1);
   }
 }
 
@@ -77,10 +111,10 @@ function drawSimulation(ctx, sim) {
   var b = sim.movingAverage * 255;
   ctx.fillStyle = `rgb(${b},${b},${b})`;
   ctx.beginPath();
-  ctx.moveTo(0, Y - (X * sim.beamSlope));
+  ctx.moveTo(0, Y - X * sim.beamSlope);
   ctx.lineTo(X, Y);
   ctx.lineTo(X, Y + 50);
-  ctx.lineTo(0, Y + 50 + (X * sim.beamSlope));
+  ctx.lineTo(0, Y + 50 + X * sim.beamSlope);
   ctx.closePath();
   ctx.fill();
 
@@ -89,12 +123,18 @@ function drawSimulation(ctx, sim) {
 
 function startDrawing() {
   var canvas = document.getElementById("myCanvas");
+  var graphCanvas = document.getElementById("brightnessPlot");
+  var graphCtx = graphCanvas.getContext("2d");
+
+  var plotter = new SimulationPlotter(graphCtx, sim);
+
   if (canvas.getContext) {
     var ctx = canvas.getContext("2d");
 
     // logic loop
     setInterval(() => {
       sim.step();
+      plotter.draw();
     }, sim.timeStep);
     // render loop
     setInterval(() => {
