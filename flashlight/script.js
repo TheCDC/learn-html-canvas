@@ -64,7 +64,7 @@ var sim = new Simulation();
 
 function drawSimulation(ctx, sim) {
   const X = sim.mousex;
-  const Y = sim.mousey - 100;
+  const Y = sim.mousey;
   // background
   ctx.fillStyle = `rgb(0,0,0)`;
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -103,7 +103,8 @@ function startDrawing() {
 }
 
 function mousemove(event) {
-  sim.setMousePos(event.clientX, event.clientY);
+  var rect = document.getElementById("myCanvas").getBoundingClientRect();
+  sim.setMousePos(event.clientX-rect.left, event.clientY-rect.top);
 }
 
 function mouseClick(event) {
