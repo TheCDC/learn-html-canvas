@@ -5,7 +5,6 @@ class Simulation {
     this.on = true;
     this.brightness = 0;
     this.timeStep = 1000 / 60; //milliseconds
-    this.flickerChance = 1 / 10;
     this.movingWindowSize = 100;
     this.frames = new Array(this.movingWindowSize).fill(0); //window for moving average
     this.movingAverage = 0; // moving average value
@@ -59,6 +58,7 @@ class Simulation {
     } else {
       // make startup brightness random.
       const rand = Math.random()/2 + 0.5;
+      this.movingWindowSize = Math.round(Math.random()*200);
       this.frames = new Array(this.movingWindowSize).fill(rand);
       this.movingAverage = rand;
     }
