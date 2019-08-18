@@ -4,7 +4,7 @@ CENTER = {
   x: WIDTH / 2,
   y: HEIGHT / 2,
 }
-radiusMin = 150;
+radiusMin = 50;
 radiusMax = 300;
 function drawSimulation(ctx) {
   ctx.fillStyle = `rgb(0,0,0)`;
