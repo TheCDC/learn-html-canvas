@@ -22,13 +22,13 @@ function drawSimulation(ctx) {
       y: point_radius * Math.sin(point_angle) + CENTER.y
     }
     var left_corner = {
-      x: radiusMax * Math.cos(point_angle - angular_width / 2) + CENTER.x,
-      y: radiusMax * Math.sin(point_angle - angular_width / 2) + CENTER.y
+      x: radiusMax * Math.cos(point_angle - angular_width / 2) + center_point.x,
+      y: radiusMax * Math.sin(point_angle - angular_width / 2) + center_point.y
     };
     var right_corner = {
-      x: radiusMax * Math.cos(point_angle + angular_width / 2) + CENTER.x,
-      y: radiusMax * Math.sin(point_angle + angular_width / 2) + CENTER.y
-    };
+      x: radiusMax * Math.cos(point_angle + angular_width / 2) + center_point.x,
+      y: radiusMax * Math.sin(point_angle + angular_width / 2) + center_point.y
+    }
     // console.log(center_point)
     ctx.fillStyle = `rgb(255,255,255)`;
     ctx.beginPath();
