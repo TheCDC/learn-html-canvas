@@ -1,11 +1,11 @@
-WIDTH = 1600;
-HEIGHT = 900;
+WIDTH = 800;
+HEIGHT = 450;
 CENTER = {
   x: WIDTH / 2,
   y: HEIGHT / 2,
 }
-radiusMin = 800;
-radiusMax = 2000;
+radiusMin = 300;
+radiusMax = 600;
 function drawSimulation(ctx) {
   ctx.fillStyle = `rgb(0,0,0)`;
   var WIDTH = ctx.canvas.width;
