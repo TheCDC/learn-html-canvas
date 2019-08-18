@@ -16,7 +16,7 @@ function drawSimulation(ctx) {
   for (var i = 0; i < numLines; i++) {
     var point_radius = Math.random() * (radiusMax - radiusMin) + radiusMin;
     var point_angle = 2 * Math.PI * Math.random();
-    var angular_width = Math.random() * (1 / 100) * 2 * Math.PI
+    var angular_width = Math.random() * (2 / 100) * 2 * Math.PI
     var center_point = {
       x: point_radius * Math.cos(point_angle) + CENTER.x,
       y: point_radius * Math.sin(point_angle) + CENTER.y
