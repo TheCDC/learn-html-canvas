@@ -4,8 +4,8 @@ CENTER = {
   x: WIDTH / 2,
   y: HEIGHT / 2,
 }
-radiusMin = 300;
-radiusMax = 600;
+radiusMin = 150;
+radiusMax = 300;
 function drawSimulation(ctx) {
   ctx.fillStyle = `rgb(0,0,0)`;
   var WIDTH = ctx.canvas.width;
@@ -22,12 +22,12 @@ function drawSimulation(ctx) {
       y: point_radius * Math.sin(point_angle) + CENTER.y
     }
     var left_corner = {
-      x: radiusMax * Math.cos(point_angle - angular_width / 2) + center_point.x,
-      y: radiusMax * Math.sin(point_angle - angular_width / 2) + center_point.y
+      x: WIDTH * Math.cos(point_angle - angular_width / 2) + center_point.x,
+      y: WIDTH * Math.sin(point_angle - angular_width / 2) + center_point.y
     };
     var right_corner = {
-      x: radiusMax * Math.cos(point_angle + angular_width / 2) + center_point.x,
-      y: radiusMax * Math.sin(point_angle + angular_width / 2) + center_point.y
+      x: WIDTH * Math.cos(point_angle + angular_width / 2) + center_point.x,
+      y: WIDTH * Math.sin(point_angle + angular_width / 2) + center_point.y
     }
     // console.log(center_point)
     ctx.fillStyle = `rgb(255,255,255)`;
