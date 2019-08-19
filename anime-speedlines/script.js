@@ -1,3 +1,4 @@
+USERIMAGE = null;
 WIDTH = 800;
 HEIGHT = 450;
 CENTER = {
@@ -7,12 +8,22 @@ CENTER = {
 radiusMin = 150;
 radiusMax = 300;
 function drawSimulation(ctx) {
+  // black background
   ctx.fillStyle = `rgb(0,0,0)`;
   var WIDTH = ctx.canvas.width;
   var HEIGHT = ctx.canvas.height;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  // user image
+  if (USERIMAGE != null) {
+    var scalingFactor = HEIGHT / USERIMAGE.height;
+    var targetDimensions = {
+      x: USERIMAGE.width * scalingFactor,
+      y: USERIMAGE.height * scalingFactor,
+    }
+    ctx.drawImage(USERIMAGE, WIDTH / 2 - targetDimensions.x / 2, 0, targetDimensions.x, targetDimensions.y);
+  }
+  // speed lines
   var numLines = Math.round(Math.random() * 100);
-  // console.log(numLines)
   for (var i = 0; i < numLines; i++) {
     var point_radius = Math.random() * (radiusMax - radiusMin) + radiusMin;
     var point_angle = 2 * Math.PI * Math.random();
@@ -44,6 +55,14 @@ function drawSimulation(ctx) {
 function startDrawing() {
   var canvas = document.getElementById("myCanvas");
 
+  var e = document.getElementById("imgUploadField");
+  function handleFiles(e) {
+
+    var img = new Image;
+    img.src = URL.createObjectURL(e.target.files[0])
+    USERIMAGE = img
+  }
+  e.addEventListener("change", handleFiles);
 
 
   if (canvas.getContext) {
