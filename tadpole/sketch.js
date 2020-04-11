@@ -2,11 +2,11 @@ var MOVERSTATES = Object.freeze({
   MOVING: 1,
   SPINNING: 2,
 });
-const SEEDMAX = 30000;
+const SEED_MAXIMUM = 30000;
 class Mover {
   constructor(canvas) {
     this.hsvColor = random(255);
-    this.seed = random(SEEDMAX);
+    this.seed = random(SEED_MAXIMUM);
     this.lastTransitionTime = millis();
     this.position = {
       x: random(canvas.width),
@@ -35,16 +35,15 @@ class Mover {
         this.position.x != this.destination.x ||
         this.position.y != this.destination.y
       ) {
-        var xdiff = this.destination.x - this.position.x;
-        var ydiff = this.destination.y - this.position.y;
+        var diff_x = this.destination.x - this.position.x;
+        var diff_y = this.destination.y - this.position.y;
 
-        // text(xdiff + " " + ydiff, 10, 10);
-        var posdiff = pow(pow(xdiff, 2) + pow(ydiff, 2), 0.5);
-        if (posdiff < this.speed) {
+        var distance = pow(pow(diff_x, 2) + pow(diff_y, 2), 0.5);
+        if (distance < this.speed) {
           this.position = this.destination;
           this.state = MOVERSTATES.SPINNING;
         } else {
-          var ang = atan2(ydiff, xdiff);
+          var ang = atan2(diff_y, diff_x);
           this.position.x += this.speed * cos(ang);
           this.position.y += this.speed * sin(ang);
         }
@@ -61,7 +60,7 @@ class Mover {
           x: random(canvas.width),
           y: random(canvas.height),
         };
-        this.seed = random(SEEDMAX);
+        this.seed = random(SEED_MAXIMUM);
         this.speed = random(7);
       }
     } else {
@@ -107,14 +106,14 @@ function drawWebLines(movers_array, canvas) {
   //and put each unit in its corresponding cell
   //grid is 3d array
   //create empty grid
-  var maximum_distance = 40;
-  var grid_cell_side_length = 40;
+  var maximum_distance = 50;
+  var grid_cell_side_length = maximum_distance;
   var grid = [];
-  var numrows = ceil(canvas.height / grid_cell_side_length);
-  var numcols = ceil(canvas.width / grid_cell_side_length);
-  for (var rs = 0; rs < numrows; rs++) {
+  var num_grid_rows = ceil(canvas.height / grid_cell_side_length);
+  var num_grid_cols = ceil(canvas.width / grid_cell_side_length);
+  for (var rs = 0; rs < num_grid_rows; rs++) {
     var row = [];
-    for (var cs = 0; cs < numcols; cs++) {
+    for (var cs = 0; cs < num_grid_cols; cs++) {
       row.push([]);
     }
     grid.push(row);
@@ -134,60 +133,64 @@ function drawWebLines(movers_array, canvas) {
     grid[grid_row][grid_col].push(mover_to_place_in_grid);
   });
   //iterate over cells and draw lines between units that are close enough
-  grid.forEach((row, y) => {
-    row.forEach((col, x) => {
-      push();
-      fill(255);
-      stroke(0);
-      //text(grid[y][x].length, x * maximum_distance, y * maximum_distance + 10);
+  movers_array.forEach((unit) => {
+    var y = int(unit.position.y / grid_cell_side_length);
+    var x = int(unit.position.x / grid_cell_side_length);
 
-      pop();
-      var relevant_units = new Set();
-      for (var neighbor_y = y - 1; neighbor_y <= y + 1; neighbor_y++) {
-        for (var neighbor_x = x - 1; neighbor_x <= x + 1; neighbor_x++) {
-          var row = grid[neighbor_y];
-          if (row === undefined) {
-            continue;
-          }
-          var target = row[neighbor_x];
-          if (target !== undefined) {
-            relevant_units = new Set([...relevant_units, ...target]);
-          } else {
-            //nop
-          }
+    push();
+    fill(255);
+    stroke(0);
+    //text(grid[y][x].length, x * maximum_distance, y * maximum_distance + 10);
+
+    pop();
+    var relevant_units = new Set();
+    for (var neighbor_y = y - 1; neighbor_y <= y + 1; neighbor_y++) {
+      for (var neighbor_x = x - 1; neighbor_x <= x + 1; neighbor_x++) {
+        var row = grid[neighbor_y];
+        if (row === undefined) {
+          continue;
+        }
+        var target = row[neighbor_x];
+        if (target !== undefined) {
+          relevant_units = new Set([...relevant_units, ...target]);
+        } else {
+          //nop
         }
       }
-      grid[y][x].forEach((cell_container) => {
-        if (!cell_container.flag) {
-          cell_container.flag = true;
-          relevant_units.forEach((other_cell_container) => {
-            var obj_a = cell_container.object;
-            var obj_b = other_cell_container.object;
-            var d = dist(
+    }
+    grid[y][x].forEach((each_object_container) => {
+      if (!each_object_container.flag) {
+        each_object_container.flag = true;
+        relevant_units.forEach((other_cell_container) => {
+          var obj_a = each_object_container.object;
+          var obj_b = other_cell_container.object;
+          var d = dist(
+            obj_a.position.x,
+            obj_a.position.y,
+            obj_b.position.x,
+            obj_b.position.y
+          );
+          if (d <= maximum_distance) {
+            var opacity = (d * 255) / maximum_distance;
+            push();
+            var weight =
+              0.5 + (7 * max(maximum_distance - d, 0)) / maximum_distance;
+            strokeWeight(weight);
+            stroke(255, 255, 255, opacity);
+            line(
               obj_a.position.x,
               obj_a.position.y,
               obj_b.position.x,
               obj_b.position.y
             );
-            if (d < maximum_distance) {
-              var opacity = (d * 255) / maximum_distance;
-              push();
-              var weight =
-                (8 * max(maximum_distance - d, 0)) / maximum_distance;
-              strokeWeight(weight);
-              stroke(255, 255, 255, opacity);
-              line(
-                obj_a.position.x,
-                obj_a.position.y,
-                obj_b.position.x,
-                obj_b.position.y
-              );
-              pop();
-            }
-          });
-        }
-      });
+            pop();
+          }
+        });
+      }
     });
+  });
+  grid.forEach((row, y) => {
+    row.forEach((col, x) => {});
   });
 }
 var movers = [];
