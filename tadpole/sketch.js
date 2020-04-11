@@ -5,6 +5,7 @@ var MOVERSTATES = Object.freeze({
 const SEEDMAX = 30000;
 class Mover {
   constructor(canvas) {
+    this.hsvColor = random(255);
     this.seed = random(SEEDMAX);
     this.lastTransitionTime = millis();
     this.position = {
@@ -68,7 +69,9 @@ class Mover {
   }
 
   draw() {
-    fill(0, 255, 0);
+    push();
+    colorMode(HSL, 255);
+    fill(this.hsvColor, 128, 128);
 
     if (this.state === MOVERSTATES.MOVING) {
       ellipse(this.position.x, this.position.y, 10, 10);
@@ -93,15 +96,8 @@ class Mover {
         200,
       255
     );
-    //text(opacity, this.position.x, this.position.y);
-    push();
+    colorMode(RGB);
     stroke(255, 0, 0, opacity);
-    // line(
-    //   this.position.x,
-    //   this.position.y,
-    //   this.destination.x,
-    //   this.destination.y
-    // );
     pop();
   }
 }
@@ -111,8 +107,8 @@ function drawWebLines(movers_array, canvas) {
   //and put each unit in its corresponding cell
   //grid is 3d array
   //create empty grid
-  var maximum_distance = 30;
-  var grid_cell_side_length = 30;
+  var maximum_distance = 40;
+  var grid_cell_side_length = 40;
   var grid = [];
   var numrows = ceil(canvas.height / grid_cell_side_length);
   var numcols = ceil(canvas.width / grid_cell_side_length);
@@ -120,17 +116,6 @@ function drawWebLines(movers_array, canvas) {
     var row = [];
     for (var cs = 0; cs < numcols; cs++) {
       row.push([]);
-      //   push();
-      //   strokeWeight(1);
-      //   fill(20, 20, 20, 0);
-      //   stroke(32, 32, 32);
-      //   square(
-      //     cs * maximum_distance,
-      //     rs * maximum_distance,
-      //     maximum_distance,
-      //     maximum_distance
-      //   );
-      //   pop();
     }
     grid.push(row);
   }
@@ -209,8 +194,8 @@ var movers = [];
 var CANVAS;
 
 function setup() {
-  CANVAS = createCanvas(600, 400);
-  for (var i = 0; i < 150; i++) {
+  CANVAS = createCanvas(600, 600);
+  for (var i = 0; i < 200; i++) {
     movers.push(new Mover(CANVAS));
   }
 }
