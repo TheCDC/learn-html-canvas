@@ -112,10 +112,8 @@ function drawWebLines(movers_array, canvas) {
   var num_grid_rows = ceil(canvas.height / grid_cell_side_length);
   var num_grid_cols = ceil(canvas.width / grid_cell_side_length);
   for (var rs = 0; rs < num_grid_rows; rs++) {
-    var row = [];
-    for (var cs = 0; cs < num_grid_cols; cs++) {
-      row.push([]);
-    }
+    var row = new Array(num_grid_cols);
+
     grid.push(row);
   }
   //pack units into a container that can flag whether the unit has been processed
@@ -123,14 +121,10 @@ function drawWebLines(movers_array, canvas) {
     return { object: unit, flag: false };
   });
   //populate grid
-  containers.forEach((mover_to_place_in_grid) => {
-    var grid_row = floor(
-      mover_to_place_in_grid.object.position.y / grid_cell_side_length
-    );
-    var grid_col = floor(
-      mover_to_place_in_grid.object.position.x / grid_cell_side_length
-    );
-    grid[grid_row][grid_col].push(mover_to_place_in_grid);
+  movers.forEach((unit) => {
+    var grid_row = floor(unit.position.y / grid_cell_side_length);
+    var grid_col = floor(unit.position.x / grid_cell_side_length);
+    grid[grid_row][grid_col].push(unit);
   });
   //iterate over cells and draw lines between units that are close enough
   movers_array.forEach((unit) => {
