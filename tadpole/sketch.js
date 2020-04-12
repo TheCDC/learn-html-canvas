@@ -16,8 +16,8 @@ class Mover {
     this.state = MOVERSTATES.MOVING;
     this.canvas = canvas;
     this.destination = {
-      x: random(canvas.width),
-      y: random(canvas.height),
+      x: random(this.canvas.width),
+      y: random(this.canvas.height),
     };
 
     this.speed = 3;
@@ -57,8 +57,8 @@ class Mover {
         this.lastTransitionTime = millis();
         this.state = MOVERSTATES.MOVING;
         this.destination = {
-          x: random(canvas.width),
-          y: random(canvas.height),
+          x: random(this.canvas.width),
+          y: random(this.canvas.height),
         };
         this.seed = random(SEED_MAXIMUM);
         this.speed = random(7);
@@ -124,16 +124,16 @@ function drawWebLines(movers_array, canvas) {
   });
   //populate grid
   containers.forEach((mover_to_place_in_grid) => {
-    var grid_row = floor(
-      mover_to_place_in_grid.object.position.y / grid_cell_side_length
+    var grid_row = min(
+      num_grid_rows,
+      floor(mover_to_place_in_grid.object.position.y / grid_cell_side_length)
     );
-    var grid_col = floor(
-      mover_to_place_in_grid.object.position.x / grid_cell_side_length
+    var grid_col = min(
+      num_grid_cols,
+      floor(mover_to_place_in_grid.object.position.x / grid_cell_side_length)
     );
     var target_cell = grid[grid_row][grid_col];
-    if (target_cell !== undefined) {
-      target_cell.push(mover_to_place_in_grid);
-    }
+    target_cell.push(mover_to_place_in_grid);
   });
   //iterate over cells and draw lines between units that are close enough
   movers_array.forEach((unit) => {
