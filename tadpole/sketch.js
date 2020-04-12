@@ -106,7 +106,7 @@ function drawWebLines(movers_array, canvas) {
   //and put each unit in its corresponding cell
   //grid is 3d array
   //create empty grid
-  var maximum_distance = 50;
+  var maximum_distance = 25;
   var grid_cell_side_length = maximum_distance;
   var grid = [];
   var num_grid_rows = ceil(canvas.height / grid_cell_side_length);
@@ -197,7 +197,7 @@ var movers = [];
 var CANVAS;
 
 function setup() {
-  CANVAS = createCanvas(600, 600);
+  CANVAS = createCanvas(400, 400);
   for (var i = 0; i < 200; i++) {
     movers.push(new Mover(CANVAS));
   }
