@@ -123,10 +123,14 @@ function drawWebLines(movers_array, canvas) {
     return { object: unit, flag: false };
   });
   //populate grid
-  movers.forEach((unit) => {
-    var grid_row = floor(unit.position.y / grid_cell_side_length);
-    var grid_col = floor(unit.position.x / grid_cell_side_length);
-    grid[grid_row][grid_col].push(unit);
+  containers.forEach((mover_to_place_in_grid) => {
+    var grid_row = floor(
+      mover_to_place_in_grid.object.position.y / grid_cell_side_length
+    );
+    var grid_col = floor(
+      mover_to_place_in_grid.object.position.x / grid_cell_side_length
+    );
+    grid[grid_row][grid_col].push(mover_to_place_in_grid);
   });
   //iterate over cells and draw lines between units that are close enough
   movers_array.forEach((unit) => {
