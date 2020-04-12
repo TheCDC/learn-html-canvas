@@ -124,16 +124,25 @@ function drawWebLines(movers_array, canvas) {
   });
   //populate grid
   containers.forEach((mover_to_place_in_grid) => {
-    var grid_row = min(
-      num_grid_rows,
-      floor(mover_to_place_in_grid.object.position.y / grid_cell_side_length)
-    );
-    var grid_col = min(
-      num_grid_cols,
-      floor(mover_to_place_in_grid.object.position.x / grid_cell_side_length)
-    );
-    var target_cell = grid[grid_row][grid_col];
-    target_cell.push(mover_to_place_in_grid);
+    var obj = mover_to_place_in_grid.object;
+    var pos = mover_to_place_in_grid.object.position;
+    if (
+      pos.x > obj.canvas.width &&
+      pos.x < 0 &&
+      pos.y > obj.canvas.height &&
+      pos.y < 0
+    ) {
+      var grid_row = min(
+        num_grid_rows,
+        floor(mover_to_place_in_grid.object.position.y / grid_cell_side_length)
+      );
+      var grid_col = min(
+        num_grid_cols,
+        floor(mover_to_place_in_grid.object.position.x / grid_cell_side_length)
+      );
+      var target_cell = grid[grid_row][grid_col];
+      target_cell.push(mover_to_place_in_grid);
+    }
   });
   //iterate over cells and draw lines between units that are close enough
   movers_array.forEach((unit) => {
