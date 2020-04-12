@@ -106,7 +106,7 @@ function drawWebLines(movers_array, canvas) {
   //and put each unit in its corresponding cell
   //grid is 3d array
   //create empty grid
-  var maximum_distance = 25;
+  var maximum_distance = 30;
   var grid_cell_side_length = maximum_distance;
   var grid = [];
   var num_grid_rows = ceil(canvas.height / grid_cell_side_length);
@@ -130,7 +130,11 @@ function drawWebLines(movers_array, canvas) {
     var grid_col = floor(
       mover_to_place_in_grid.object.position.x / grid_cell_side_length
     );
-    grid[grid_row][grid_col].push(mover_to_place_in_grid);
+    var target_cell = grid[grid_row][grid_col];
+    if(target_cell !== undefined){
+
+      target_cell.push(mover_to_place_in_grid);
+    }
   });
   //iterate over cells and draw lines between units that are close enough
   movers_array.forEach((unit) => {
@@ -141,7 +145,6 @@ function drawWebLines(movers_array, canvas) {
     fill(255);
     stroke(0);
     //text(grid[y][x].length, x * maximum_distance, y * maximum_distance + 10);
-
     pop();
     var relevant_units = new Set();
     for (var neighbor_y = y - 1; neighbor_y <= y + 1; neighbor_y++) {
@@ -198,7 +201,7 @@ var CANVAS;
 
 function setup() {
   CANVAS = createCanvas(400, 400);
-  for (var i = 0; i < 200; i++) {
+  for (var i = 0; i < 150; i++) {
     movers.push(new Mover(CANVAS));
   }
 }
