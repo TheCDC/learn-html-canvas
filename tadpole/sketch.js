@@ -112,8 +112,10 @@ function drawWebLines(movers_array, canvas) {
   var num_grid_rows = ceil(canvas.height / grid_cell_side_length);
   var num_grid_cols = ceil(canvas.width / grid_cell_side_length);
   for (var rs = 0; rs < num_grid_rows; rs++) {
-    var row = new Array(num_grid_cols);
-
+    var row = [];
+    for (var cs = 0; cs < num_grid_cols; cs++) {
+      row.push([]);
+    }
     grid.push(row);
   }
   //pack units into a container that can flag whether the unit has been processed
