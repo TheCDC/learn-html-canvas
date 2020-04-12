@@ -124,10 +124,10 @@ function drawWebLines(movers_array, canvas) {
   });
   //populate grid
   containers.forEach((mover_to_place_in_grid) => {
-    var grid_row = int(
+    var grid_row = floor(
       mover_to_place_in_grid.object.position.y / grid_cell_side_length
     );
-    var grid_col = int(
+    var grid_col = floor(
       mover_to_place_in_grid.object.position.x / grid_cell_side_length
     );
     grid[grid_row][grid_col].push(mover_to_place_in_grid);
