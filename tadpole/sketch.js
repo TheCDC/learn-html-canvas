@@ -127,10 +127,10 @@ function drawWebLines(movers_array, canvas) {
     var obj = mover_to_place_in_grid.object;
     var pos = mover_to_place_in_grid.object.position;
     if (
-      pos.x > obj.canvas.width &&
-      pos.x < 0 &&
-      pos.y > obj.canvas.height &&
-      pos.y < 0
+      pos.x < obj.canvas.width &&
+      pos.x > 0 &&
+      pos.y < obj.canvas.height &&
+      pos.y > 0
     ) {
       var grid_row = min(
         num_grid_rows,
