@@ -83,6 +83,8 @@ class Lightning {
 var entities = [];
 var cnv;
 function setup() {
+  createP("Click to create lightning!");
+
   frameRate(30);
 
   //colorMode(HSB, 255);
