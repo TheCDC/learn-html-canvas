@@ -131,8 +131,7 @@ function drawWebLines(movers_array, canvas) {
       mover_to_place_in_grid.object.position.x / grid_cell_side_length
     );
     var target_cell = grid[grid_row][grid_col];
-    if(target_cell !== undefined){
-
+    if (target_cell !== undefined) {
       target_cell.push(mover_to_place_in_grid);
     }
   });
@@ -212,6 +211,9 @@ function draw() {
     el.update();
     el.draw();
   });
-
-  drawWebLines(movers, CANVAS);
+  try {
+    drawWebLines(movers, CANVAS);
+  } catch (err) {
+    console.error(err);
+  }
 }
