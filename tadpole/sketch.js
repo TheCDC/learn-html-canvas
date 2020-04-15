@@ -70,11 +70,15 @@ class Mover {
   draw() {
     push();
     colorMode(HSL, 255);
-    fill(this.hsvColor, 128, 128);
-
+    
+    
     if (this.state === MOVERSTATES.MOVING) {
+      fill(this.hsvColor, 32, 128);
+
       ellipse(this.position.x, this.position.y, 10, 10);
     } else if (this.state === MOVERSTATES.SPINNING) {
+      fill(this.hsvColor, 128+64, 128);
+
       var freq = 0.05;
       var rad = 20;
       circle(
