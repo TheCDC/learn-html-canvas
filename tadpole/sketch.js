@@ -1,3 +1,5 @@
+var MOUSEDISTURBRADIUS = 50;
+
 var MOVERSTATES = Object.freeze({
   MOVING: 1,
   SPINNING: 2,
@@ -41,7 +43,7 @@ class Mover {
         var distance = pow(pow(diff_x, 2) + pow(diff_y, 2), 0.5);
         if (distance < this.speed) {
           this.position = this.destination;
-          this.state = MOVERSTATES.SPINNING;
+          this.transitionToSpinning();
         } else {
           var ang = atan2(diff_y, diff_x);
           this.position.x += this.speed * cos(ang);
@@ -52,32 +54,45 @@ class Mover {
         this.state = MOVERSTATES.SPINNING;
       }
     } else if (this.state === MOVERSTATES.SPINNING) {
+      //the mouse being near a particle forces it to get going.
+      var mouseDist = dist(this.position.x, this.position.y, mouseX, mouseY);
+      if (mouseDist < MOUSEDISTURBRADIUS) {
+        this.transitionToMoving();
+      }
+      //time also triggers the transition to moving
       if (millis() - this.lastTransitionTime > this.seed) {
-        //go to moving state after a random delay
-        this.lastTransitionTime = millis();
-        this.state = MOVERSTATES.MOVING;
-        this.destination = {
-          x: random(this.canvas.width),
-          y: random(this.canvas.height),
-        };
-        this.seed = random(SEED_MAXIMUM);
-        this.speed = random(7);
+        this.transitionToMoving();
       }
     } else {
     }
+  }
+  transitionToSpinning() {
+    this.state = MOVERSTATES.SPINNING;
+  }
+  transitionToMoving() {
+    //go to moving state after a random delay
+    this.lastTransitionTime = millis();
+    this.state = MOVERSTATES.MOVING;
+
+    this.destination = {
+      x: random(this.canvas.width),
+      y: random(this.canvas.height),
+    };
+
+    this.seed = random(SEED_MAXIMUM);
+    this.speed = random(1, 10);
   }
 
   draw() {
     push();
     colorMode(HSL, 255);
-    
-    
+
     if (this.state === MOVERSTATES.MOVING) {
       fill(this.hsvColor, 32, 128);
 
       ellipse(this.position.x, this.position.y, 10, 10);
     } else if (this.state === MOVERSTATES.SPINNING) {
-      fill(this.hsvColor, 128+64, 128);
+      fill(this.hsvColor, 128 + 64, 128);
 
       var freq = 0.05;
       var rad = 20;
@@ -110,7 +125,7 @@ function drawWebLines(movers_array, canvas) {
   //and put each unit in its corresponding cell
   //grid is 3d array
   //create empty grid
-  var maximum_distance = 30;
+  var maximum_distance = 40;
   var grid_cell_side_length = maximum_distance;
   var grid = [];
   var num_grid_rows = ceil(canvas.height / grid_cell_side_length);
@@ -211,15 +226,46 @@ function drawWebLines(movers_array, canvas) {
 var movers = [];
 var CANVAS;
 
+function addParticle() {
+  movers.push(new Mover(CANVAS));
+}
+
+function subtractParticle() {
+  movers.pop();
+}
+
 function setup() {
-  CANVAS = createCanvas(400, 400);
-  for (var i = 0; i < 150; i++) {
+  frameRate(60);
+  CANVAS = createCanvas(600, 600);
+  var resetButton = createButton("Reset");
+  resetButton.mousePressed(InitializeSimulation);
+  var addParticleButton = createButton("Add One");
+  addParticleButton.mousePressed(addParticle);
+  var removeParticleButton = createButton("Remove one");
+  removeParticleButton.mousePressed(subtractParticle);
+  InitializeSimulation();
+}
+
+function InitializeSimulation() {
+  movers = [];
+  for (var i = 0; i < 100; i++) {
     movers.push(new Mover(CANVAS));
   }
 }
 
 function draw() {
   background(20);
+  var mouseBGOpacityTemporalPeriod = 128;
+  fill(
+    255,
+    255,
+    255,
+    64 +
+      64 *
+        0.5 *
+        (1 + sin(frameCount / (mouseBGOpacityTemporalPeriod / (2 * PI))))
+  );
+  circle(mouseX, mouseY, MOUSEDISTURBRADIUS * 2);
   movers.forEach((el) => {
     el.update();
     el.draw();
