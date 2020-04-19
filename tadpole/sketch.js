@@ -135,7 +135,7 @@ function drawWebLines(movers_array, canvas) {
   //and put each unit in its corresponding cell
   //grid is 3d array
   //create empty grid
-  var maximum_distance = 40;
+  var maximum_distance = 60;
   var grid_cell_side_length = maximum_distance;
   var grid = [];
   var num_grid_rows = ceil(canvas.height / grid_cell_side_length);
@@ -223,13 +223,13 @@ function drawWebLines(movers_array, canvas) {
 
             beginShape();
             vertex(obj_a.position.x, obj_a.position.y);
-            var e = 25;
+            var e = 2;
 
             bezierVertex(
-              obj_a.position.x + obj_a.orbitPosition.x,
-              obj_a.position.y + obj_a.orbitPosition.y,
-              obj_b.position.x + obj_b.orbitPosition.x,
-              obj_b.position.y + obj_b.orbitPosition.y,
+              obj_a.position.x + obj_a.orbitPosition.x + random(-e, e),
+              obj_a.position.y + obj_a.orbitPosition.y + random(-e, e),
+              obj_b.position.x + obj_b.orbitPosition.x + random(-e, e),
+              obj_b.position.y + obj_b.orbitPosition.y + random(-e, e),
               obj_b.position.x,
               obj_b.position.y
             );
@@ -263,7 +263,7 @@ function subtractParticle() {
 
 function setup() {
   frameRate(60);
-  CANVAS = createCanvas(600, 600);
+  CANVAS = createCanvas(800, 800);
   var resetButton = createButton("Reset");
   resetButton.mousePressed(InitializeSimulation);
   var addParticleButton = createButton("Add One");
