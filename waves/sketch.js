@@ -35,47 +35,82 @@ class Wave {
 }
 var waves = [];
 var canvas;
-var a = 100;
-var b = 80;
-var c = 100;
-var d = 2;
-var f = 100;
-var dev = 0.3;
+var amplitude = 100;
+var rate_of_procession_divisor = 2000;
+var wavelength = 1000;
+var deviation_between_waves = 2;
+var flop_rate_divisor = 100;
+var deviation_rate = 1;
 
-function setup() {
-  canvas = createCanvas(600, 400);
-  colorMode(RGB);
+// SLIDERS
+var slider_amplitude;
+var slider_rate_of_procession_divisor;
+var slider_wavelength;
+var slider_deviation_between_waves;
+var slider_flop_rate_divisor;
+var slider_deviation_rate = 1;
 
-  background(32, 32, 32, 25);
+function reset() {
+  amplitude = slider_amplitude.value();
+  rate_of_procession_divisor = slider_rate_of_procession_divisor.value();
+  wavelength = slider_wavelength.value();
+  deviation_between_waves = slider_deviation_between_waves.value();
+  flop_rate_divisor = slider_flop_rate_divisor.value();
+  deviation_rate = slider_deviation_rate.value();
   let nmax = 10;
+  waves = [];
   for (let n = 0; n < nmax; n++) {
     var e = 1;
-    var ndev = (dev * n) / nmax;
+    var ndev = (deviation_rate * n) / nmax;
     //ndev = dev;
-    let na = deviate(a, ndev);
-    let nb = deviate(b, ndev);
-    let nc = deviate(c, ndev);
-    let nd = deviate(d, ndev * 2);
+    let na = deviate(amplitude, ndev);
+    let nb = deviate(rate_of_procession_divisor, ndev);
+    let nc = deviate(wavelength, ndev);
+    let nd = deviate(deviation_between_waves, ndev * 2);
     let ne = deviate(e, ndev);
-    let func = genfunc(na, nb, nc, nd, ne, f, ndev);
+    let func = genfunc(na, nb, nc, nd, ne, flop_rate_divisor, ndev);
 
     wave = new Wave(canvas, (x) => func(x), 0, 0);
 
     waves.push(wave);
   }
 }
+function setup() {
+  //Create elements
+  canvas = createCanvas(800, 800);
+
+  createP("slider_amplitude");
+  slider_amplitude = createSlider(1, 2000, 100);
+  createP("slider_rate_of_procession_divisor");
+  slider_rate_of_procession_divisor = createSlider(1, 2000, 2000);
+  createP("slider_wavelength");
+  slider_wavelength = createSlider(1, 2000, 1000);
+  createP("slider_deviation_between_waves");
+  slider_deviation_between_waves = createSlider(0.1, 10, 2, 0.01);
+  createP("slider_flop_rate_divisor");
+  slider_flop_rate_divisor = createSlider(1, 2000, 100);
+  createP("slider_deviation_rate");
+  slider_deviation_rate = createSlider(0.1, 10, 1);
+  var reset_button = createButton("apply");
+  reset_button.mousePressed(reset);
+  colorMode(RGB);
+
+  background(32, 32, 32, 25);
+  reset();
+}
 
 function draw() {
   //ellipse(mouseX, mouseY, 20, 20);
   blendMode(DIFFERENCE);
-  background(32, 32, 32, 64 * 2);
+  var fadeRate = 16 / 255;
+  background(fadeRate * 255, fadeRate * 255, fadeRate * 255, 64 * 2);
 
   blendMode(BLEND);
   waves.forEach((w) => w.draw());
 }
 
 function deviate(val, deviation) {
-  let ret = random() * deviation * val + val;
+  let ret = (random() - 0.5) * deviation * val + val;
   return ret;
 }
 
