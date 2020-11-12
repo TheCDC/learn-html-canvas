@@ -8,6 +8,7 @@ let imgSarah;
 let imgWyatt;
 let imgJoe;
 let imgGradient;
+let imgLaCroix;
 let HEIGHT = 480;
 let WIDTH = 640;
 
@@ -43,7 +44,8 @@ class RandomMover {
         this.y += speed * sign((this.y = this.target.y));
       }
     } else if (this.state === 1) {
-        if(random()){}
+      if (random()) {
+      }
     }
   }
 
@@ -57,47 +59,63 @@ function preload() {
   imgJoe = loadImage("img/outline-joe.png");
   imgWyatt = loadImage("img/outline-wyatt.png");
   imgGradient = loadImage("img/gradient.png");
+  imgLaCroix = loadImage("img/lacroix.jpg");
   layerSarah = createGraphics(WIDTH, HEIGHT);
   layerJoe = createGraphics(WIDTH, HEIGHT);
   layerWyatt = createGraphics(WIDTH, HEIGHT);
 }
 
 function setup() {
-    frameRate(30);
   createCanvas(640, 480);
   imageMode(CENTER);
 }
 
 function draw() {
-  // background(255, 255, 0, 255);
   // ===== write to static layers
-  ///middle figure layer
-  blendMode(REPLACE);
   layerSarah.imageMode(CORNERS);
-  //   layerSarah.background(64, 0, 0);
   layerSarah.image(imgSarah, 0, 0);
-  ///left figure layer
   layerJoe.imageMode(CORNERS);
-  //   layerJoe.background(0, 64, 0);
   layerJoe.image(imgJoe, 0, 0);
-  ///right figure layer
   layerWyatt.imageMode(CORNERS);
-  //   layerWyatt.background(0, 0, 64);
   layerWyatt.image(imgWyatt, 0, 0);
 
-  ///flashlight spot 1 layer
+  // ===== flashlight layers
   var yOffset = (300 * (mouseY - HEIGHT / 2)) / 480;
   var xOffset = (200 * abs(mouseX - WIDTH / 2)) / (WIDTH / 2);
-  layerFlashlightSarah = createFlashlightLayer(0, 0);
-  layerFlashlightJoe = createFlashlightLayer(-xOffset, yOffset);
-  layerFlashlightWyatt = createFlashlightLayer(xOffset, yOffset);
+  layerFlashlightSarah = createFlashlightLayer(0, 0, (layer) => {
+    layer.imageMode(CORNERS);
+    layer.blendMode(ADD);
+    layer.image(imgLaCroix, 0, 0);
+    layer.blendMode(DARKEST);
+    layer.background((millis() / 30) % 255);
+    layer.blendMode(ADD);
+    // layer.tint(255, 255, 0);
+  });
+  layerFlashlightJoe = createFlashlightLayer(-xOffset, yOffset, (layer) => {
+    layer.imageMode(CORNERS);
+    layer.blendMode(ADD);
+    layer.image(imgLaCroix, -100, -100);
+    layer.blendMode(DARKEST);
+    layer.background((millis() / 30) % 255);
+    layer.blendMode(ADD);
+    // layer.tint(0, 255, 255);
+  });
+  layerFlashlightWyatt = createFlashlightLayer(xOffset, yOffset, (layer) => {
+    layer.imageMode(CORNERS);
+    layer.blendMode(ADD);
+    layer.image(imgLaCroix, -200, -200);
+    layer.blendMode(DARKEST);
+    layer.background((millis() / 30) % 255);
+    layer.blendMode(ADD);
+    // layer.tint(255, 0, 255);
+  });
 
-  //blend middle figure and flashlight spot 1
+  // ===== blend figures and flashlights
 
   let maskedSarah = maskGraphicsByGraphics(layerFlashlightSarah, layerSarah);
   let maskedJoe = maskGraphicsByGraphics(layerFlashlightJoe, layerJoe);
   let maskedWyatt = maskGraphicsByGraphics(layerFlashlightWyatt, layerWyatt);
-
+  // ===== Final pass, bring layers together
   imageMode(CORNERS);
   blendMode(REPLACE);
   background(0);
@@ -105,20 +123,30 @@ function draw() {
   image(maskedWyatt, 0, 0);
   image(maskedSarah, 0, 0);
   image(maskedJoe, 0, 0);
-
+  /// ===== cleanup, delete unused layers
   layerFlashlightSarah.remove();
   layerFlashlightJoe.remove();
   layerFlashlightWyatt.remove();
-  maskedSarah.reset();
-  maskedJoe.reset();
-  maskedWyatt.reset();
+  // maskedSarah.reset();
+  // maskedJoe.reset();
+  // maskedWyatt.reset();
 }
 
-function createFlashlightLayer(xoffset, yoffset) {
+function createFlashlightLayer(xoffset, yoffset, preloadFunc) {
   let layer = createGraphics(WIDTH, HEIGHT);
-  layer.imageMode(CENTER);
-  layer.background(0, 0, 0, 64);
-  layer.image(imgGradient, mouseX + xoffset, mouseY + yoffset);
+  if (preloadFunc !== null) {
+    preloadFunc(layer);
+  }
+  let fLayer = createGraphics(WIDTH, HEIGHT);
+  fLayer.imageMode(CENTER);
+  fLayer.image(imgGradient, mouseX + xoffset, mouseY + yoffset);
+  let pre = layer.get();
+  pre.mask(fLayer.get());
+  fLayer.remove();
+  layer.blendMode(REPLACE);
+  layer.imageMode(CORNERS);
+  layer.image(pre, 0, 0);
+
   return layer;
 }
 
