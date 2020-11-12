@@ -105,7 +105,7 @@ class Mover {
       fill(this.hsvColor, 128 + 64, 128);
 
       var freq = 0.05;
-      var rad = 20;
+      var rad = 50*this.seed/SEED_MAXIMUM;
       circle(
         this.position.x,
         this.position.y,
