@@ -11,7 +11,27 @@ let imgGradient;
 let HEIGHT = 480;
 let WIDTH = 640;
 
+class RandomMover {
 
+    constructor(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.target = { x: 0, y: 0 };
+        this.state = 0;
+        this.chooseNewTarget();
+
+    }
+
+    update() {
+
+    }
+
+    chooseNewTarget() {
+        this.target = { x: this.x + random(width), y: this.y + random(height) };
+    }
+}
 
 function preload() {
     imgSarah = loadImage('img/outline-sarah.png');
@@ -46,8 +66,8 @@ function draw() {
 
     ///flashlight spot 1 layer
     layerFlashlightSarah = createFlashlightLayer(0, 0);
-    layerFlashlightJoe = createFlashlightLayer(-50, 50);
-    layerFlashlightWyatt = createFlashlightLayer(50, 50);
+    layerFlashlightJoe = createFlashlightLayer(-25, 50);
+    layerFlashlightWyatt = createFlashlightLayer(25, 50);
 
     //blend middle figure and flashlight spot 1
 
