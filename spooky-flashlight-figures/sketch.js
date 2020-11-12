@@ -1,5 +1,3 @@
-let img;
-let imgMask;
 let layerSarah;
 let lyaerJoe;
 let LayerWyatt;
@@ -13,18 +11,16 @@ let imgGradient;
 let HEIGHT = 480;
 let WIDTH = 640;
 
+
+
 function preload() {
     imgSarah = loadImage('img/outline-sarah.png');
     imgJoe = loadImage('img/outline-joe.png');
     imgWyatt = loadImage('img/outline-wyatt.png');
     imgGradient = loadImage('img/gradient.png');
-    imgMask = loadImage('img/gradient.png');
     layerSarah = createGraphics(WIDTH, HEIGHT);
     layerJoe = createGraphics(WIDTH, HEIGHT);
     layerWyatt = createGraphics(WIDTH, HEIGHT);
-    layer2 = createGraphics(WIDTH, HEIGHT);
-
-
 }
 
 function setup() {
@@ -33,24 +29,25 @@ function setup() {
 }
 
 function draw() {
+    // background(255, 255, 0, 255);
     // ===== write to static layers
     ///middle figure layer
     layerSarah.imageMode(CORNERS);
-    layerSarah.background(0);
+    layerSarah.background(64, 0, 0);
     layerSarah.image(imgSarah, 0, 0);
     ///left figure layer
     layerJoe.imageMode(CORNERS);
-    layerJoe.background(0);
+    layerJoe.background(0, 64, 0);
     layerJoe.image(imgJoe, 0, 0);
     ///right figure layer
     layerWyatt.imageMode(CORNERS);
-    layerWyatt.background(0);
+    layerWyatt.background(0, 0, 64);
     layerWyatt.image(imgWyatt, 0, 0);
 
     ///flashlight spot 1 layer
     layerFlashlightSarah = createFlashlightLayer(0, 0);
-    layerFlashlightJoe = createFlashlightLayer(30, 30);
-    layerFlashlightWyatt = createFlashlightLayer(-30, 30);
+    layerFlashlightJoe = createFlashlightLayer(-50, 50);
+    layerFlashlightWyatt = createFlashlightLayer(50, 50);
 
     //blend middle figure and flashlight spot 1
 
@@ -58,12 +55,13 @@ function draw() {
     let maskedJoe = maskGraphicsByGraphics(layerJoe, layerFlashlightJoe);
     let maskedWyatt = maskGraphicsByGraphics(layerWyatt, layerFlashlightWyatt);
 
-    background(0, 0, 0, 255);
     imageMode(CORNERS);
-    // blendMode(MULTIPLY);
-    image(maskedJoe, 0, 0);
+    blendMode(REPLACE);
+    background(0);
+    blendMode(ADD);
     image(maskedWyatt, 0, 0);
     image(maskedSarah, 0, 0);
+    image(maskedJoe, 0, 0);
 
     layerFlashlightSarah.remove();
     layerFlashlightJoe.remove();
@@ -76,6 +74,7 @@ function draw() {
 function createFlashlightLayer(xoffset, yoffset) {
     let layer = createGraphics(WIDTH, HEIGHT);
     layer.imageMode(CENTER);
+    layer.background(0, 0, 0, 64)
     layer.image(imgGradient, mouseX + xoffset, mouseY + yoffset);
     return layer;
 }
