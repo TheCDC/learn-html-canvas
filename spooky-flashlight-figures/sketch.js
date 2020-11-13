@@ -129,7 +129,7 @@ function draw() {
     (layer) => {
       layer.imageMode(CORNERS);
       layer.blendMode(ADD);
-      layer.image(imgLaCroix, -200, -500);
+      layer.image(imgLaCroix, -300, -450);
       layer.blendMode(SCREEN);
       layer.background((cos(millis() / (500 * 7)) / 2 + 0.5) * 255);
       layer.blendMode(ADD);
@@ -175,7 +175,7 @@ function createFlashlightLayer(xoffset, yoffset, preloadFunc) {
   layer.blendMode(REPLACE);
   layer.imageMode(CORNERS);
   layer.image(pre, 0, 0);
-  pre.rest();
+  pre.reset();
 
   return layer;
 }
