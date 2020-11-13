@@ -83,7 +83,7 @@ function draw() {
   let boxRadius = 100;
   let timeIndex = millis() / 5000;
   let xBase = map(
-    noise(timeIndex*5, 0),
+    noise(timeIndex * 5, 0),
     0,
     1,
     WIDTH / 2 - boxRadius,
@@ -97,10 +97,10 @@ function draw() {
       HEIGHT / 2 - boxRadius,
       HEIGHT / 2 + boxRadius
     ) +
-    noise(timeIndex*50) * 20;
+    noise(timeIndex * 50) * 20;
 
   var yOffset = (300 * (yBase - HEIGHT / 2)) / 480;
-  var xOffset = (200 * abs(xBase - WIDTH / 2)) / (WIDTH / 2);
+  var xOffset = (300 * abs(xBase - WIDTH / 2)) / (WIDTH / 2);
   layerFlashlightSarah = createFlashlightLayer(xBase, yBase, (layer) => {
     layer.imageMode(CORNERS);
     layer.blendMode(ADD);
@@ -116,7 +116,7 @@ function draw() {
     (layer) => {
       layer.imageMode(CORNERS);
       layer.blendMode(ADD);
-      layer.image(imgLaCroix, -100, -100);
+      layer.image(imgLaCroix, -500, -100);
       layer.blendMode(SCREEN);
       layer.background((cos(millis() / (500 * 5)) / 2 + 0.5) * 255);
       layer.blendMode(ADD);
@@ -129,7 +129,7 @@ function draw() {
     (layer) => {
       layer.imageMode(CORNERS);
       layer.blendMode(ADD);
-      layer.image(imgLaCroix, -200, -200);
+      layer.image(imgLaCroix, -200, -500);
       layer.blendMode(SCREEN);
       layer.background((cos(millis() / (500 * 7)) / 2 + 0.5) * 255);
       layer.blendMode(ADD);
@@ -156,9 +156,9 @@ function draw() {
   layerFlashlightSarah.remove();
   layerFlashlightJoe.remove();
   layerFlashlightWyatt.remove();
-  // maskedSarah.reset();
-  // maskedJoe.reset();
-  // maskedWyatt.reset();
+  maskedSarah.reset();
+  maskedJoe.reset();
+  maskedWyatt.reset();
 }
 
 function createFlashlightLayer(xoffset, yoffset, preloadFunc) {
@@ -175,6 +175,7 @@ function createFlashlightLayer(xoffset, yoffset, preloadFunc) {
   layer.blendMode(REPLACE);
   layer.imageMode(CORNERS);
   layer.image(pre, 0, 0);
+  pre.rest();
 
   return layer;
 }
