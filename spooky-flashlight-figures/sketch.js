@@ -80,9 +80,28 @@ function draw() {
   layerWyatt.image(imgWyatt, 0, 0);
 
   // ===== flashlight layers
-  var yOffset = (300 * (mouseY - HEIGHT / 2)) / 480;
-  var xOffset = (200 * abs(mouseX - WIDTH / 2)) / (WIDTH / 2);
-  layerFlashlightSarah = createFlashlightLayer(mouseX, mouseY, (layer) => {
+  let boxRadius = 100;
+  let timeIndex = millis() / 5000;
+  let xBase = map(
+    noise(timeIndex*5, 0),
+    0,
+    1,
+    WIDTH / 2 - boxRadius,
+    WIDTH / 2 + boxRadius
+  );
+  let yBase =
+    map(
+      noise(timeIndex, 10),
+      0,
+      1,
+      HEIGHT / 2 - boxRadius,
+      HEIGHT / 2 + boxRadius
+    ) +
+    noise(timeIndex*50) * 20;
+
+  var yOffset = (300 * (yBase - HEIGHT / 2)) / 480;
+  var xOffset = (200 * abs(xBase - WIDTH / 2)) / (WIDTH / 2);
+  layerFlashlightSarah = createFlashlightLayer(xBase, yBase, (layer) => {
     layer.imageMode(CORNERS);
     layer.blendMode(ADD);
     layer.image(imgLaCroix, 0, 0);
@@ -92,8 +111,8 @@ function draw() {
     // layer.tint(255, 255, 0);
   });
   layerFlashlightJoe = createFlashlightLayer(
-    mouseX - xOffset,
-    mouseY + yOffset,
+    xBase - xOffset,
+    yBase + yOffset,
     (layer) => {
       layer.imageMode(CORNERS);
       layer.blendMode(ADD);
@@ -105,8 +124,8 @@ function draw() {
     }
   );
   layerFlashlightWyatt = createFlashlightLayer(
-    mouseX + xOffset,
-    mouseY + yOffset,
+    xBase + xOffset,
+    yBase + yOffset,
     (layer) => {
       layer.imageMode(CORNERS);
       layer.blendMode(ADD);
@@ -131,6 +150,8 @@ function draw() {
   image(maskedWyatt, 0, 0);
   image(maskedSarah, 0, 0);
   image(maskedJoe, 0, 0);
+  stroke(255);
+  // line(WIDTH / 2 - boxRadius, HEIGHT / 2 - boxRadius, WIDTH / 2 + boxRadius, HEIGHT / 2 + boxRadius);
   /// ===== cleanup, delete unused layers
   layerFlashlightSarah.remove();
   layerFlashlightJoe.remove();
