@@ -82,33 +82,41 @@ function draw() {
   // ===== flashlight layers
   var yOffset = (300 * (mouseY - HEIGHT / 2)) / 480;
   var xOffset = (200 * abs(mouseX - WIDTH / 2)) / (WIDTH / 2);
-  layerFlashlightSarah = createFlashlightLayer(0, 0, (layer) => {
+  layerFlashlightSarah = createFlashlightLayer(mouseX, mouseY, (layer) => {
     layer.imageMode(CORNERS);
     layer.blendMode(ADD);
     layer.image(imgLaCroix, 0, 0);
-    layer.blendMode(DARKEST);
-    layer.background((millis() / 30) % 255);
+    layer.blendMode(SCREEN);
+    layer.background((cos(millis() / (500 * 3)) / 2 + 0.5) * 255);
     layer.blendMode(ADD);
     // layer.tint(255, 255, 0);
   });
-  layerFlashlightJoe = createFlashlightLayer(-xOffset, yOffset, (layer) => {
-    layer.imageMode(CORNERS);
-    layer.blendMode(ADD);
-    layer.image(imgLaCroix, -100, -100);
-    layer.blendMode(DARKEST);
-    layer.background((millis() / 30) % 255);
-    layer.blendMode(ADD);
-    // layer.tint(0, 255, 255);
-  });
-  layerFlashlightWyatt = createFlashlightLayer(xOffset, yOffset, (layer) => {
-    layer.imageMode(CORNERS);
-    layer.blendMode(ADD);
-    layer.image(imgLaCroix, -200, -200);
-    layer.blendMode(DARKEST);
-    layer.background((millis() / 30) % 255);
-    layer.blendMode(ADD);
-    // layer.tint(255, 0, 255);
-  });
+  layerFlashlightJoe = createFlashlightLayer(
+    mouseX - xOffset,
+    mouseY + yOffset,
+    (layer) => {
+      layer.imageMode(CORNERS);
+      layer.blendMode(ADD);
+      layer.image(imgLaCroix, -100, -100);
+      layer.blendMode(SCREEN);
+      layer.background((cos(millis() / (500 * 5)) / 2 + 0.5) * 255);
+      layer.blendMode(ADD);
+      // layer.tint(0, 255, 255);
+    }
+  );
+  layerFlashlightWyatt = createFlashlightLayer(
+    mouseX + xOffset,
+    mouseY + yOffset,
+    (layer) => {
+      layer.imageMode(CORNERS);
+      layer.blendMode(ADD);
+      layer.image(imgLaCroix, -200, -200);
+      layer.blendMode(SCREEN);
+      layer.background((cos(millis() / (500 * 7)) / 2 + 0.5) * 255);
+      layer.blendMode(ADD);
+      // layer.tint(255, 0, 255);
+    }
+  );
 
   // ===== blend figures and flashlights
 
@@ -139,7 +147,7 @@ function createFlashlightLayer(xoffset, yoffset, preloadFunc) {
   }
   let fLayer = createGraphics(WIDTH, HEIGHT);
   fLayer.imageMode(CENTER);
-  fLayer.image(imgGradient, mouseX + xoffset, mouseY + yoffset);
+  fLayer.image(imgGradient, xoffset, yoffset);
   let pre = layer.get();
   pre.mask(fLayer.get());
   fLayer.remove();
