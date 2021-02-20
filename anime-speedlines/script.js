@@ -8,8 +8,9 @@ function drawSimulation(ctx) {
     ctx.fillStyle = `rgb(0,0,0)`;
     var WIDTH = ctx.canvas.width;
     var HEIGHT = ctx.canvas.height;
-    radiusMin = 150;
-    radiusMax = 300;
+    const MINDIM = Math.min(WIDTH, HEIGHT)
+    radiusMin = MINDIM / 4;
+    radiusMax = MINDIM;
     CENTER = {
         x: WIDTH / 2,
         y: HEIGHT / 2,
