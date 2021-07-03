@@ -1,6 +1,27 @@
-body{
-    background-color: darkgray;
+body {
+  background-color: rgb(255, 255, 255);
 }
+
+.titleCardContainer {
+  display: flex;
+  flex-direction: row;
+  flex-flow: row wrap;
+  justify-content: center;
+}
+
+
+.titleCard > div {
+  display: flex;
+  flex-direction: row;
+  
+  justify-content: center;
+}
+
+.titleCard > .title {
+  font-size: x-large;
+  font-weight: bolder;
+}
+
 .projectCardList {
   display: flex;
   flex-direction: row;
@@ -12,34 +33,32 @@ body{
   box-shadow: 2px 6px 12px rgba(0, 0, 0, 0.1);
   margin: 0.5em;
   padding: 0.5em;
-
-  border: 0.1em solid #efefef;
+  border: 0.1em solid #929292;
+  border-radius: 0.25em;
   transition: box-shadow 0.5s;
   height: 100%;
   width: 15;
   background-color: white;
 }
+
 .projectCardContainer:hover {
-  box-shadow: 2px 6px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 2px 6px 30px rgba(0, 0, 0, 0.542);
   transition: box-shadow 0.5s;
 }
 
-
-.projectCardContainer > .projectCardTitle {
+.projectCardContainer>.projectCardTitle {
   text-align: center;
   border-bottom: 1px solid lightgray;
 }
 
-.projectCardContainer > .projectCardDescription {
-margin-top: 1em;
-margin-bottom: 1em;
-
+.projectCardContainer>.projectCardDescription {
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
-.projectCardContainer > .projectCardPlayButton {
+.projectCardContainer>.projectCardPlayButton {
   background-color: dodgerblue;
   border: 1px solid gray;
-
   padding: 0.5em;
   display: flex;
   justify-content: center;
