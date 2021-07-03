@@ -12,47 +12,6 @@ let imgLaCroix;
 let HEIGHT = 480;
 let WIDTH = 640;
 
-class RandomMover {
-  constructor(x, y, width, height) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.target = { x: 0, y: 0 };
-    this.state = 0;
-    this.speed = 5;
-    this.chooseNewTarget();
-  }
-
-  update() {
-    //homing
-    if (this.state === 0) {
-      if (
-        abs(this.x - this.target.x) >= 1 &&
-        abs(this.y - this.target.y) >= 1
-      ) {
-        this.state = 1;
-      }
-      if (abs(this.x - this.target.x) >= this.speed) {
-        this.x = this.target.x;
-      } else {
-        this.x += speed * sign((this.x = this.target.x));
-      }
-      if (abs(this.y - this.target.y) >= this.speed) {
-        this.y = this.target.y;
-      } else {
-        this.y += speed * sign((this.y = this.target.y));
-      }
-    } else if (this.state === 1) {
-      if (random()) {
-      }
-    }
-  }
-
-  chooseNewTarget() {
-    this.target = { x: this.x + random(width), y: this.y + random(height) };
-  }
-}
 
 function preload() {
   imgSarah = loadImage("img/outline-sarah.png");
@@ -69,7 +28,9 @@ function setup() {
   createCanvas(640, 480);
   imageMode(CENTER);
 }
-
+function mouseIsOnScreen(){
+  return mouseX > 0 && mouseX <= WIDTH && mouseY > 0 && mouseY <= HEIGHT;
+}
 function draw() {
   // ===== write to static layers
   layerSarah.imageMode(CORNERS);
@@ -82,22 +43,47 @@ function draw() {
   // ===== flashlight layers
   let boxRadius = 100;
   let timeIndex = millis() / 5000;
-  let xBase = map(
-    noise(timeIndex * 5, 0),
-    0,
-    1,
-    WIDTH / 2 - boxRadius,
-    WIDTH / 2 + boxRadius
-  );
-  let yBase =
-    map(
+  let xBase = ((x) => {
+    if (mouseIsOnScreen()) {
+      return x + map(
+        noise(timeIndex * 5, 0),
+        0,
+        1,
+        -80, 80
+      );
+    }
+    return map(
+      noise(timeIndex * 5, 0),
+      0,
+      1,
+      WIDTH / 2 - boxRadius,
+      WIDTH / 2 + boxRadius
+    );
+
+  })(mouseX)
+  let yBase = ((y) => {
+    if (mouseIsOnScreen()) {
+      return y + map(
+        noise(timeIndex, 10),
+        0,
+        1,
+        -80,
+        80
+      ) +
+        noise(timeIndex * 50) * 20;
+    }
+    return map(
       noise(timeIndex, 10),
       0,
       1,
       HEIGHT / 2 - boxRadius,
       HEIGHT / 2 + boxRadius
     ) +
-    noise(timeIndex * 50) * 20;
+      noise(timeIndex * 50) * 20;
+
+  })(mouseY)
+
+
 
   var yOffset = (300 * (yBase - HEIGHT / 2)) / 480;
   var xOffset = (300 * abs(xBase - WIDTH / 2)) / (WIDTH / 2);
@@ -138,7 +124,6 @@ function draw() {
   );
 
   // ===== blend figures and flashlights
-
   let maskedSarah = maskGraphicsByGraphics(layerFlashlightSarah, layerSarah);
   let maskedJoe = maskGraphicsByGraphics(layerFlashlightJoe, layerJoe);
   let maskedWyatt = maskGraphicsByGraphics(layerFlashlightWyatt, layerWyatt);
@@ -151,8 +136,7 @@ function draw() {
   image(maskedSarah, 0, 0);
   image(maskedJoe, 0, 0);
   stroke(255);
-  // line(WIDTH / 2 - boxRadius, HEIGHT / 2 - boxRadius, WIDTH / 2 + boxRadius, HEIGHT / 2 + boxRadius);
-  /// ===== cleanup, delete unused layers
+  /// ===== clean up memory, delete unused layers
   layerFlashlightSarah.remove();
   layerFlashlightJoe.remove();
   layerFlashlightWyatt.remove();
