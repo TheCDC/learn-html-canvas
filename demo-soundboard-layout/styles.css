@@ -2,7 +2,7 @@
     0% {
         transform: translateX(-100%);
     }
-    50% {
+    100% {
         transform: translateX(0);
     }
 }
@@ -138,7 +138,7 @@ body {
     justify-content: center;
     margin: 0.25em;
     overflow: hidden;
-    animation: 1s ease-out 0s 1 enwiden;
+    animation: 2s ease-in 0s 1 enwiden;
 }
 
 .soundButton>.soundButtonContent {
