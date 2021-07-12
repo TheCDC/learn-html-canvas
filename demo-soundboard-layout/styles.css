@@ -1,0 +1,122 @@
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-100%);
+    }
+    50% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes enwiden {
+    0% {
+        width: 0%;
+        display: none;
+        border: none;
+    }
+    50% {
+        width: 0%;
+        display: block;
+    }
+    100% {
+        width: 9em;
+    }
+}
+
+body {
+    background-color: black;
+}
+
+.allButtonsContainer {
+    animation: 1s ease-out 0s 1 slideInFromLeft;
+    background-color: black;
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-around;
+}
+
+.semanticGroupContainer {
+    color: white;
+    border: 0.1em solid white;
+    border-radius: 1em;
+    flex-basis: 30em;
+    flex-shrink: 1;
+    flex-grow: 1;
+    justify-content: space-around;
+    margin: 0.25em;
+}
+
+.semanticGroupContainer>.title {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: auto;
+    max-width: fit-content;
+    margin-right: auto;
+    margin-bottom: 1em;
+    animation: 2s ease-out 0s 1 fadeIn;
+}
+
+.semanticGroupContainer>.title>div {
+    padding-right: 0.4em;
+    padding-left: 0.4em;
+    border: 0.1em solid white;
+    /* border-right: 0.1em solid white; */
+    /* border: 0.1em solid white; */
+    border-radius: 1em;
+    font: normal 2em sans-serif;
+}
+
+.semanticGroupContainer>.content {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.soundButton {
+    width: 9em;
+    height: 9em;
+    background-color: darkgreen;
+    border-radius: 0.5em;
+    border: 0.05em solid white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0.25em;
+    overflow: hidden;
+    animation: 1s ease-out 0s 1 enwiden;
+}
+
+.soundButton>.soundButtonContent {
+    margin-left: auto;
+    margin-right: auto;
+    width: min-content;
+    color: white;
+    font: normal 5em sans-serif;
+}
+
+.soundButton>.detail {
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+    color: white;
+    font: normal 1em sans-serif;
+}
