@@ -7,6 +7,33 @@
     }
 }
 
+@keyframes slideInFromTop {
+    0% {
+        transform: translateY(-100%);
+    }
+    50% {
+        transform: translateY(-100%);
+    }
+    62% {
+        transform: translateY(-60%);
+    }
+    75% {
+        transform: translateY(0);
+    }
+    81% {
+        transform: translateY(-7%);
+    }
+    88% {
+        transform: translateY(-10%);
+    }
+    94% {
+        transform: translateY(-7%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
 @keyframes fadeIn {
     0% {
         opacity: 0;
@@ -69,7 +96,7 @@ body {
     max-width: fit-content;
     margin-right: auto;
     margin-bottom: 1em;
-    animation: 2s ease-out 0s 1 fadeIn;
+    overflow: hidden;
 }
 
 .semanticGroupContainer>.title>div {
@@ -80,6 +107,7 @@ body {
     /* border: 0.1em solid white; */
     /* border-radius: 1em; */
     font: normal 2em sans-serif;
+    animation: 2s linear 0s 1 slideInFromTop;
 }
 
 .semanticGroupContainer>.content {
