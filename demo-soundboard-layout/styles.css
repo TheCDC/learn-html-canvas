@@ -75,10 +75,10 @@ body {
 .semanticGroupContainer>.title>div {
     padding-right: 0.4em;
     padding-left: 0.4em;
-    border: 0.1em solid white;
+    border-bottom: 0.1em solid white;
     /* border-right: 0.1em solid white; */
     /* border: 0.1em solid white; */
-    border-radius: 1em;
+    /* border-radius: 1em; */
     font: normal 2em sans-serif;
 }
 
@@ -118,6 +118,7 @@ body {
     width: min-content;
     color: white;
     font: normal 2em sans-serif;
+    animation: 3s ease-out 0s 1 fadeIn;
 }
 
 .soundButton>.detail {
