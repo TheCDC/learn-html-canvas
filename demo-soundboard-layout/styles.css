@@ -30,7 +30,7 @@
         display: block;
     }
     100% {
-        width: 9em;
+        width: 5em;
     }
 }
 
@@ -92,8 +92,8 @@ body {
 }
 
 .soundButton {
-    width: 9em;
-    height: 9em;
+    width: 5em;
+    height: 5em;
     background-color: darkgreen;
     border-radius: 0.5em;
     border: 0.05em solid white;
@@ -102,7 +102,7 @@ body {
     justify-content: center;
     margin: 0.25em;
     overflow: hidden;
-    animation: 2s ease-in 0s 1 enwiden;
+    animation: 1s ease-in 0s 1 enwiden;
 }
 
 .soundButton>.soundButtonContent {
@@ -110,7 +110,7 @@ body {
     margin-right: auto;
     width: min-content;
     color: white;
-    font: normal 5em sans-serif;
+    font: normal 2em sans-serif;
 }
 
 .soundButton>.detail {
@@ -118,5 +118,5 @@ body {
     margin-right: auto;
     width: fit-content;
     color: white;
-    font: normal 1em sans-serif;
+    font: normal 0.8em sans-serif;
 }
