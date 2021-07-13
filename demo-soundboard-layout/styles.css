@@ -95,7 +95,7 @@ body {
     width: 5em;
     height: 5em;
     background-color: darkgreen;
-    border-radius: 0.5em;
+    border-radius: 1.5em;
     border: 0.05em solid white;
     display: flex;
     flex-direction: column;
@@ -103,6 +103,13 @@ body {
     margin: 0.25em;
     overflow: hidden;
     animation: 1s ease-in 0s 1 enwiden;
+    transition: 0.5s;
+}
+
+.soundButton:hover {
+    border-radius: 0em;
+    background-color: rgb(138, 237, 0);
+    transition: 0.5s;
 }
 
 .soundButton>.soundButtonContent {
