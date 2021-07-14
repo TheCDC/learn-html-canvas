@@ -107,7 +107,7 @@ body {
     /* border: 0.1em solid white; */
     /* border-radius: 1em; */
     font: normal 2em sans-serif;
-    animation: 2s linear 0s 1 slideInFromTop;
+    animation: 3s linear 0s 1 slideInFromTop;
 }
 
 .semanticGroupContainer>.content {
