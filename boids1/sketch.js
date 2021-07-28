@@ -214,7 +214,7 @@ var ITEMS = [];
 function setup() {
   CANVAS = createCanvas(WIDTH, HEIGHT);
 
-  for (var ii = 0; ii < 128; ii++) {
+  for (var ii = 0; ii < 128*4; ii++) {
     const x = random(WIDTH);
     const y = random(HEIGHT);
     const b = new Boid(CANVAS);
@@ -226,8 +226,6 @@ function setup() {
 function draw() {
   TREE = new QuadTree(7, WIDTH);
   for (const item of ITEMS) {
-    item.position.x = (item.position.x + 1) % WIDTH;
-    item.position.y = (item.position.y + 1) % HEIGHT;
   }
 
   for (const item of ITEMS) {
@@ -243,13 +241,13 @@ function draw() {
 
     noFill();
     // color(255*currentNode.depth/TREE.maxDepth);
-    stroke(120, 100, 100, 1);
-    rect(
-      currentNode.x,
-      currentNode.y,
-      currentNode.sideLength,
-      currentNode.sideLength
-    );
+    stroke(120, 100, 100, 0.5);
+    // rect(
+    //   currentNode.x,
+    //   currentNode.y,
+    //   currentNode.sideLength,
+    //   currentNode.sideLength
+    // );
     // ====== Draw items
 
     for (const item of currentNode.items) {
@@ -259,21 +257,47 @@ function draw() {
         item.position.y,
         32
       );
-      var sumX = 0;
-      var sumY = 0;
-      for (const n of neighbors) {
-        stroke(150, 100, 100, 1);
-        line(item.position.x, item.position.y, n.position.x, n.position.y);
-        sumX += n.position.x;
-        sumY += n.position.y;
+      if (neighbors.length > 1) {
+        var sumX = 0;
+        var sumY = 0;
+        for (const n of neighbors) {
+          // stroke(150, 100, 100, 1);
+          // line(item.position.x, item.position.y, n.position.x, n.position.y);
+          sumX += n.position.x;
+          sumY += n.position.y;
+        }
+        var geoCenter = {
+          x: sumX / neighbors.length,
+          y: sumY / neighbors.length,
+        };
+        if (item.position.x < geoCenter.x) {
+          item.position.x -= 2;
+        } else {
+          item.position.x++;
+        }
+        if (item.position.y < geoCenter.y) {
+          item.position.y -= 2;
+        } else {
+          item.position.y++;
+        }
+// draw line to the point this boid is escaping
+        stroke(60,0,100);
+        line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
+        circle(geoCenter.x, geoCenter.y, 4);
+      } else {
+        item.position.x++;
+        item.position.y++;
       }
-      var geoCenter = {
-        x: sumX / neighbors.length,
-        y: sumY / neighbors.length,
-      };
-      stroke(60);
-      line(item.position.x, item.position.y,geoCenter.x, geoCenter.y)
-      circle(geoCenter.x, geoCenter.y, 8);
+      if (item.position.x < 0) {
+        item.position.x = WIDTH + item.position.x;
+      }
+      if (item.position.y < 0) {
+        item.position.y = HEIGHT + item.position.y;
+      }
+
+      item.position.x = item.position.x % WIDTH;
+      item.position.y = item.position.y % HEIGHT;
+
       fill(item.color);
       noStroke();
       circle(item.position.x, item.position.y, 8);
