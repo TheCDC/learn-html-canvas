@@ -1,3 +1,22 @@
+function squareIntersectsWithCircle(squareX, squareY, squareSideLength, circleX, circleY, circleRadius) {
+  circleDistance_x = Math.abs(circleX - squareX);
+  circleDistance_y = Math.abs(circleY - squareY);
+
+  if (circleDistance_x > (squareSideLength / 2 + circleRadius)) { return false; }
+  if (circleDistance_y > (squareSideLength / 2 + circleRadius)) { return false; }
+
+  if (circleDistance_x <= (squareSideLength / 2)) { return true; }
+  if (circleDistance_y <= (squareSideLength / 2)) { return true; }
+
+  cornerDistance_sq = Math.pow((circleDistance_x - squareSideLength / 2), 2) +
+    Math.pow(circleDistance_y - squareSideLength / 2, 2);
+
+  return (cornerDistance_sq <= (Math.pow(circleRadius, 2)));
+}
+
+function pointInsideCircle(x, y, cx, cy, cr) {
+  return Math.pow(Math.pow(cx - x, 2) + Math.pow(cy - y, 2), 0.5) <= cr
+}
 class QuadTreeNode {
   constructor(sideLength, x, y, items, isLeaf, depth) {
     this.sideLength = sideLength
@@ -27,7 +46,6 @@ class QuadTree {
   insert(item, x, y) {
     // console.log('insert', item, '@', x, y)
     let i = 0;
-    // TODO
     let currentNode = this.root;
     while (true) {
       if (i > this.maxDepth) {
@@ -44,7 +62,7 @@ class QuadTree {
         if (currentNode.x <= x && x < currentNode.x + currentNode.sideLength
           && currentNode.y <= y && y < currentNode.y + currentNode.sideLength) {
           currentNode.items.push(item)
-          console.log('successfully inserted', item, '@', currentNode)
+          console.log('successfully inserted', item, x, y, '@', currentNode)
           break;
 
         }
@@ -79,8 +97,36 @@ class QuadTree {
     }
   }
   getWithinRadius(x, y, r) {
-    // TODO
-
+    // traverse tree and examine all leaf nodes that contain at least one point in the target radius
+    let matchedLeaves = [];
+    let queue = [this.root];
+    while (queue.length > 0) {
+      let currentNode = queue.pop()
+      if (currentNode === null) {
+        continue;
+      }
+      if (squareIntersectsWithCircle(currentNode.x, currentNode.y, currentNode.sideLength, x, y, r)) {
+        if (currentNode.depth === this.maxDepth) {
+          matchedLeaves.push(currentNode)
+        }
+        else {
+          queue.push(currentNode.childNodes[0b00])
+          queue.push(currentNode.childNodes[0b10])
+          queue.push(currentNode.childNodes[0b01])
+          queue.push(currentNode.childNodes[0b11])
+        }
+      }
+    }
+    let results = [];
+    for (const node of matchedLeaves) {
+      console.log(node)
+      for (const item of node.items) {
+        if (pointInsideCircle(item.position.x, item.position.y, x, y, r)) {
+          results.push(item)
+        }
+      }
+    }
+    return results;
   }
 }
 
@@ -107,11 +153,18 @@ class Boid {
 const TREE = new QuadTree(3, 16)
 function setup() {
   let x = 0;
-  TREE.insert('a', 0, 0)
+  TREE.insert({ name: 'a', position: { x: 0, y: 0 } }, 0, 0)
+  TREE.insert({ name: 'b', position: { x: 1, y: 1 } }, 1, 1)
+  TREE.insert({ name: 'c', position: { x: 0, y: 1 } }, 0, 1)
+
   for (var ii = 0; ii < 128; ii++) {
 
-    TREE.insert(ii, random(16), random(16))
+    const x = random(16)
+    const y = random(16)
+    TREE.insert({ name: ii, position: { x: x, y: y } }, x, y)
   }
+
+  console.log(TREE.getWithinRadius(0, 0, 1))
 
 }
 
