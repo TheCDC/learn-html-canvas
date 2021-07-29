@@ -38,7 +38,8 @@ function minimumAngleBetween(source, target) {
   if (Math.abs(a) === smallest) return a;
   if (Math.abs(b) === smallest) return b;
   if (Math.abs(c) === smallest) return c;
-  // return ((target - source + (TWO_PI * 540) / 360) % TWO_PI) - HALF_PI;
+
+  return ((target - source + (TWO_PI * 540) / 360) % TWO_PI) - HALF_PI;
 }
 
 function squareIntersectsWithSquare(x1, y1, height1, x2, y2, height2) {
@@ -229,7 +230,8 @@ var ITEMS = [];
 const BOID_SENSE_RANGE = 64;
 const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 2;
-const BOID_SPACING_MINIMUM = 16;
+const BOID_SPACING_MINIMUM = 8;
+const BOID_DRAW_PROXIMITY_ALARM = true;
 
 var NUM_BOIDS = 128;
 var frameTimePrev = 0;
@@ -340,16 +342,23 @@ function draw() {
           distNeighborClosest &&
           distNeighborClosest < BOID_SPACING_MINIMUM
         ) {
-          const angleEscape =
-            atan2(
-              neighborClosest.position.y - item.position.y,
-              neighborClosest.position.x - item.position.x
-            ) + PI;
-          angleToTarget = minimumAngleBetween(item.direction, angleEscape);
-          myTurnRate *= 5;
-          fill(30, 100, 100);
-          stroke(0, 100, 100);
-          circle(item.position.x - 8, item.position.y, 4);
+          const angleEscape = atan2(
+            neighborClosest.position.y - item.position.y,
+            neighborClosest.position.x - item.position.x
+          );
+          angleToTarget = angleEscape;
+          myTurnRate *= 3;
+          if (BOID_DRAW_PROXIMITY_ALARM) {
+            fill(30, 100, 100);
+            stroke(0, 100, 100);
+            line(
+              item.position.x,
+              item.position.y,
+              item.position.x + 16 * cos(angleEscape),
+              item.position.y + 16 * sin(angleEscape)
+            );
+            circle(item.position.x - 8, item.position.y, 4);
+          }
         }
         const angleDiff = angleToTarget;
         const turnAmount = myTurnRate * random(1);
