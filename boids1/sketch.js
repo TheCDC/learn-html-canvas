@@ -1,3 +1,11 @@
+function normalizeAngle(ang) {
+  // => [0,2pi]
+  ang = ang % PI;
+  if (ang < 0) {
+    ang = TWO_PI + ang;
+  }
+  return ang;
+}
 function squareIntersectsWithCircle(
   squareX,
   squareY,
@@ -30,16 +38,25 @@ function squareIntersectsWithCircle(
   return cornerDistance_sq <= Math.pow(circleRadius, 2);
 }
 function minimumAngleBetween(source, target) {
-  const L = target - source;
-  const a = L;
-  const b = L + PI;
-  const c = L - PI;
-  const smallest = Math.min(Math.abs(a), Math.abs(b), Math.abs(c));
-  if (Math.abs(a) === smallest) return a;
-  if (Math.abs(b) === smallest) return b;
-  if (Math.abs(c) === smallest) return c;
+  source = normalizeAngle(source);
+  target = normalizeAngle(target);
 
-  return ((target - source + (TWO_PI * 540) / 360) % TWO_PI) - HALF_PI;
+  const b = (target - source) % TWO_PI;
+  const a = (source - target) % TWO_PI;
+  if (a < b) {
+    return -a;
+  }
+  return b;
+  // const L = target - source;
+  // const a = L;
+  // const b = L - TWO_PI;
+  // const c = L + TWO_PI;
+  // const smallest = Math.min(Math.abs(a), Math.abs(b), Math.abs(c));
+  // if (Math.abs(a) === smallest) return a;
+  // if (Math.abs(b) === smallest) return b;
+  // if (Math.abs(c) === smallest) return c;
+
+  // return ((target - source + (TWO_PI * 540) / 360) % TWO_PI) - HALF_PI;
 }
 
 function squareIntersectsWithSquare(x1, y1, height1, x2, y2, height2) {
@@ -67,20 +84,19 @@ function pointInsideCircle(x, y, cx, cy, cr) {
 }
 
 function testQuadTreeDelete() {
-  const sideLength = 16
+  const sideLength = 16;
 
   for (var depth = 1; depth < 5; depth++) {
     var items = [];
 
     const t = new QuadTree(depth, 16);
     for (var offset = 0; offset < sideLength; offset++) {
-
-      const i1 = { id: items.length, position: { x: offset, y: offset } }
-      items.push(i1)
-      t.insert(i1, i1.position.x, i1.position.y)
+      const i1 = { id: items.length, position: { x: offset, y: offset } };
+      items.push(i1);
+      t.insert(i1, i1.position.x, i1.position.y);
     }
     for (i of items) {
-      t.deleteItem(i, i.position.x, i.position.y)
+      t.deleteItem(i, i.position.x, i.position.y);
     }
   }
 }
@@ -92,7 +108,7 @@ class QuadTreeNode {
     this.items = items;
     this.isLeaf = isLeaf;
     this.depth = depth;
-    this.parent = parent
+    this.parent = parent;
     // 0,0 1,0
     // 0,1 1,1
     this.childNodes = {
@@ -103,7 +119,12 @@ class QuadTreeNode {
     };
   }
   containsPoint(x, y) {
-    return (this.x <= x && this.x + this.sideLength < x && this.y <= y && this.y + this.sideLength < y)
+    return (
+      this.x <= x &&
+      this.x + this.sideLength < x &&
+      this.y <= y &&
+      this.y + this.sideLength < y
+    );
   }
 }
 
@@ -117,37 +138,30 @@ class QuadTree {
   }
   deleteItem(item, x, y, currentNode) {
     if (currentNode == null) {
-      currentNode = this.root
+      currentNode = this.root;
     }
     if (currentNode.isLeaf) {
-      if (currentNode.items.some(x => x.id === item.id)) {
-
-        currentNode.items = currentNode.items.filter(i => i.id !== item.id)
-      }
-      else {
+      if (currentNode.items.some((x) => x.id === item.id)) {
+        currentNode.items = currentNode.items.filter((i) => i.id !== item.id);
+      } else {
         // reached where the item should be but it was never inserted into the tree
         return null;
-
       }
-    }
-    else {
+    } else {
       for (const key in currentNode.childNodes) {
-        const child = currentNode.childNodes[key]
+        const child = currentNode.childNodes[key];
         if (child && child.containsPoint(x, y)) {
-          const deletedFrom = this.deleteItem(item, x, y, child)
+          const deletedFrom = this.deleteItem(item, x, y, child);
           if (child.items.length === 0) {
-            currentNode.childNodes[key] = null
+            currentNode.childNodes[key] = null;
           }
           return deletedFrom;
         }
       }
       // console.error('somehow reached a leaf node that does not contain the cords')
     }
-
   }
-  findContainingNode(item, x, y) {
-
-  }
+  findContainingNode(item, x, y) {}
   insert(item, x, y) {
     // console.log('insert', item, '@', x, y)
     let i = 0;
@@ -216,22 +230,22 @@ class QuadTree {
         continue;
       }
       if (
-        squareIntersectsWithCircle(
-          currentNode.x,
-          currentNode.y,
-          currentNode.sideLength,
-          x,
-          y,
-          r
-        )
-        // squareIntersectsWithSquare(
-        //   x - r,
-        //   y - r,
-        //   r,
+        // squareIntersectsWithCircle(
         //   currentNode.x,
         //   currentNode.y,
-        //   currentNode.sideLength
+        //   currentNode.sideLength,
+        //   x,
+        //   y,
+        //   r
         // )
+        squareIntersectsWithSquare(
+          x - r,
+          y - r,
+          r,
+          currentNode.x,
+          currentNode.y,
+          currentNode.sideLength
+        )
       ) {
         matchedLeaves.push(currentNode);
         queue.push(currentNode.childNodes[0b00]);
@@ -271,7 +285,7 @@ class Boid {
     colorMode(HSB);
 
     this.color = color(this.species * 4 * 16, 100, 100, 1);
-    this.direction = 0;
+    this.direction = PI / 2;
   }
 }
 
@@ -285,18 +299,18 @@ var CANVAS;
 var ITEMS = [];
 var QUAD_TREE_DRAW_GRID = true;
 const QUAD_TREE_DEPTH = 4;
-const BOID_SENSE_RANGE = 32;
+const BOID_SENSE_RANGE = 64;
 const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 2;
-const BOID_SPACING_MINIMUM = 4;
+const BOID_SPACING_MINIMUM = 16;
 const BOID_DRAW_PROXIMITY_ALARM = true;
 
-var NUM_BOIDS = 512;
+var NUM_BOIDS = 128;
 var frameTimePrev = 0;
 var frameTimeDebugDrawPrevious = 0;
 function setup() {
   // ===== TESTS
-  testQuadTreeDelete()
+  testQuadTreeDelete();
   CANVAS = createCanvas(WIDTH, HEIGHT);
 
   for (var ii = 0; ii < NUM_BOIDS; ii++) {
@@ -382,10 +396,7 @@ function draw() {
 
             line(item.position.x, item.position.y, n.position.x, n.position.y);
           }
-          if (DRAW_SENSE_RANGE) {
-            stroke(item.color);
-            circle(item.position.x, item.position.y, BOID_SENSE_RANGE);
-          }
+
           sumX += n.position.x;
           sumY += n.position.y;
           sumSinDirection += sin(n.direction);
@@ -393,49 +404,47 @@ function draw() {
           const angBetween = minimumAngleBetween(item.direction, n.direction);
           sumDirectionDiff += angBetween;
         }
-
-        var angleToTarget = sumDirectionDiff / neighborsSameSpecies.length;
-        var myTurnRate = BOID_TURN_RATE;
         // turn to get away from nearest boid
-        if (
+
+        const proximityAlarm =
           neighborClosest &&
           distNeighborClosest &&
-          distNeighborClosest < BOID_SPACING_MINIMUM
-        ) {
-          const angleEscape = atan2(
-            neighborClosest.position.y - item.position.y,
-            neighborClosest.position.x - item.position.x
-          ) + PI;
-          angleToTarget = angleEscape;
-          myTurnRate *= 3;
-          if (BOID_DRAW_PROXIMITY_ALARM) {
-            fill(30, 100, 100);
-            stroke(0, 100, 100);
-            line(
-              item.position.x,
-              item.position.y,
-              item.position.x + 16 * cos(angleEscape),
-              item.position.y + 16 * sin(angleEscape)
-            );
-            circle(item.position.x - 8, item.position.y, 4);
-          }
-        }
-        const angleDiff = angleToTarget;
-        const turnAmount = myTurnRate * random(1);
-        const direction = Math.sign(angleDiff);
+          distNeighborClosest < BOID_SPACING_MINIMUM;
+        const angleEscape = proximityAlarm
+          ? atan2(
+              neighborClosest.position.y - item.position.y,
+              neighborClosest.position.x - item.position.x
+            ) + PI
+          : item.direction;
+        const angleDiffToTarget = proximityAlarm
+          ? minimumAngleBetween(item.direction, angleEscape)
+          : sumDirectionDiff / neighborsSameSpecies.length;
+        const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
-        // not in "get away" mode
-        if (Math.abs(angleDiff) < turnAmount) {
-          item.direction += angleToTarget;
-        } else {
-          item.direction += direction * turnAmount;
-        }
+        const turnAmount = myTurnRate * random(1);
+        const direction = Math.sign(angleDiffToTarget);
+        item.direction +=
+          Math.abs(angleDiffToTarget) < turnAmount
+            ? direction * angleDiffToTarget
+            : direction * turnAmount;
 
         const geoCenter = {
           x: sumX / neighborsSameSpecies.length,
           y: sumY / neighborsSameSpecies.length,
         };
-        if (DRAW_GEO_CENTER === true) {
+
+        if (proximityAlarm && BOID_DRAW_PROXIMITY_ALARM) {
+          fill(30, 100, 100);
+          stroke(0, 100, 100);
+          line(
+            item.position.x,
+            item.position.y,
+            item.position.x + 16 * cos(angleEscape),
+            item.position.y + 16 * sin(angleEscape)
+          );
+          circle(item.position.x - 8, item.position.y, 4);
+        }
+        if (DRAW_GEO_CENTER) {
           // draw line to the point this boid is escaping
           stroke(80, 0, 100);
           line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
@@ -443,7 +452,7 @@ function draw() {
         }
       }
       // random turns
-      if (random() < 0.001) {
+      if (random() < 0.005) {
         item.direction = random() * TWO_PI;
       }
 
@@ -470,7 +479,24 @@ function draw() {
         item.direction = item.direction % TWO_PI;
       }
       // ==== END normalize boid vars
+      if (DRAW_SENSE_RANGE) {
+        noFill();
+        stroke(
+          hue(item.color),
+          saturation(item.color),
+          brightness(item.color),
+          alpha(item.color) * 0.2
+        );
 
+        circle(item.position.x, item.position.y, BOID_SENSE_RANGE * 2);
+        stroke(
+          hue(item.color),
+          saturation(item.color) * 0.2,
+          brightness(item.color),
+          alpha(item.color) * 0.2
+        );
+        circle(item.position.x, item.position.y, BOID_SPACING_MINIMUM * 2);
+      }
       fill(item.color);
       stroke(0, 0, 0);
       circle(item.position.x, item.position.y, 8);
