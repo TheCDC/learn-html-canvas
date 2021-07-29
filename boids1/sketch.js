@@ -214,7 +214,7 @@ class Boid {
     colorMode(HSB);
 
     this.color = color(this.species * 4 * 16, 100, 100, 1);
-    this.direction = random() * TWO_PI;
+    this.direction = 0;
   }
 }
 
@@ -345,7 +345,7 @@ function draw() {
           const angleEscape = atan2(
             neighborClosest.position.y - item.position.y,
             neighborClosest.position.x - item.position.x
-          );
+          )+PI;
           angleToTarget = angleEscape;
           myTurnRate *= 3;
           if (BOID_DRAW_PROXIMITY_ALARM) {
