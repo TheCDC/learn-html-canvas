@@ -205,7 +205,7 @@ class Game {
 class Boid {
   constructor(canvas) {
     this.canvas = canvas;
-    this.species = random([1, 2, 3, 4]);
+    this.species = random([1, 2, 3]);
     this.position = {
       x: random(canvas.width),
       y: random(canvas.height),
@@ -222,15 +222,16 @@ const HEIGHT = WIDTH;
 var DRAW_GEO_CENTER = false;
 var DRAW_SENSE_RANGE = false;
 var DRAW_LINES_TO_NEIGHBORS = true;
-var DRAW_TREE_GRID = true;
+var DRAW_TREE_GRID = false;
 var TREE;
 var CANVAS;
 var ITEMS = [];
-const BOID_SENSE_RANGE = 32;
-const BOID_TURN_RATE = 0.05;
+const BOID_SENSE_RANGE = 64;
+const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 2;
+const BOID_SPACING_MINIMUM = 16;
 
-var NUM_BOIDS = 256;
+var NUM_BOIDS = 128;
 var frameTimePrev = 0;
 var frameTimeDebugDrawPrevious = 0;
 function setup() {
@@ -248,6 +249,7 @@ function setup() {
 function draw() {
   frameRate(60);
   background(0, 0, 0, 1);
+  angleMode(RADIANS);
 
   TREE = new QuadTree(2, WIDTH);
 
@@ -307,7 +309,6 @@ function draw() {
         }
       }
       if (neighborsSameSpecies.length > 0) {
-        angleMode(RADIANS);
         var sumX = 0;
         var sumY = 0;
         var sumSinDirection = 0;
@@ -331,10 +332,30 @@ function draw() {
           sumDirectionDiff += angBetween;
         }
 
-        const angleToTarget = sumDirectionDiff / neighborsSameSpecies.length;
+        var angleToTarget = sumDirectionDiff / neighborsSameSpecies.length;
+        var myTurnRate = BOID_TURN_RATE;
+        // turn to get away from nearest boid
+        if (
+          neighborClosest &&
+          distNeighborClosest &&
+          distNeighborClosest < BOID_SPACING_MINIMUM
+        ) {
+          const angleEscape =
+            atan2(
+              neighborClosest.position.y - item.position.y,
+              neighborClosest.position.x - item.position.x
+            ) + PI;
+          angleToTarget = minimumAngleBetween(item.direction, angleEscape);
+          myTurnRate *= 5;
+          fill(30, 100, 100);
+          stroke(0, 100, 100);
+          circle(item.position.x - 8, item.position.y, 4);
+        }
         const angleDiff = angleToTarget;
-        const turnAmount = BOID_TURN_RATE * random(1);
+        const turnAmount = myTurnRate * random(1);
         const direction = Math.sign(angleDiff);
+
+        // not in "get away" mode
         if (Math.abs(angleDiff) < turnAmount) {
           item.direction += angleToTarget;
         } else {
@@ -351,21 +372,11 @@ function draw() {
           line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
           circle(geoCenter.x, geoCenter.y, 4);
         }
-
-        // turn away from nearest boid
-        if (neighborClosest && distNeighborClosest && distNeighborClosest < 6) {
-          const angleEscape =
-            atan2(
-              neighborClosest.position.y - item.position.y,
-              neighborClosest.position.x - item.position.x
-            ) + PI;
-          item.direction = angleEscape;
-        }
       }
       // random turns
-      if (random() < 0.001) {
-        item.direction = random() * TWO_PI;
-      }
+      // if (random() < 0.001) {
+      //   item.direction = random() * TWO_PI;
+      // }
 
       const cosDir = cos(item.direction);
       const sinDir = sin(item.direction);
@@ -420,7 +431,7 @@ function draw() {
     // [mouseX, mouseY + 128],
   ];
   for (const pos of positions) {
-    var neighbors = TREE.getWithinRadius(pos[0], pos[1], 64);
+    var neighbors = TREE.getWithinRadius(pos[0], pos[1], BOID_SENSE_RANGE);
     for (const n of neighbors) {
       stroke(60, 100, 100);
       // stroke(255)
