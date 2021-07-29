@@ -204,7 +204,8 @@ class Game {
 }
 
 class Boid {
-  constructor(canvas) {
+  constructor(id, canvas) {
+    this.id = id;
     this.canvas = canvas;
     this.species = random([1, 2, 3]);
     this.position = {
@@ -223,17 +224,18 @@ const HEIGHT = WIDTH;
 var DRAW_GEO_CENTER = false;
 var DRAW_SENSE_RANGE = false;
 var DRAW_LINES_TO_NEIGHBORS = true;
-var DRAW_TREE_GRID = false;
 var TREE;
 var CANVAS;
 var ITEMS = [];
-const BOID_SENSE_RANGE = 64;
+var QUAD_TREE_DRAW_GRID = true;
+const QUAD_TREE_DEPTH = 2;
+const BOID_SENSE_RANGE = 16;
 const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 2;
-const BOID_SPACING_MINIMUM = 8;
+const BOID_SPACING_MINIMUM = 4;
 const BOID_DRAW_PROXIMITY_ALARM = true;
 
-var NUM_BOIDS = 128;
+var NUM_BOIDS = 512;
 var frameTimePrev = 0;
 var frameTimeDebugDrawPrevious = 0;
 function setup() {
@@ -242,7 +244,7 @@ function setup() {
   for (var ii = 0; ii < NUM_BOIDS; ii++) {
     const x = random(WIDTH);
     const y = random(HEIGHT);
-    const b = new Boid(CANVAS);
+    const b = new Boid(ii, CANVAS);
     const item = { name: ii, position: { x: x, y: y } };
     ITEMS.push(b);
   }
@@ -253,7 +255,7 @@ function draw() {
   background(0, 0, 0, 1);
   angleMode(RADIANS);
 
-  TREE = new QuadTree(2, WIDTH);
+  TREE = new QuadTree(QUAD_TREE_DEPTH, WIDTH);
 
   for (const item of ITEMS) {
     TREE.insert(item, item.position.x, item.position.y);
@@ -263,7 +265,7 @@ function draw() {
   let queue = [TREE.root];
   while (queue.length > 0) {
     var currentNode = queue.pop();
-    if (DRAW_TREE_GRID) {
+    if (QUAD_TREE_DRAW_GRID) {
       noFill();
       // color(255*currentNode.depth/TREE.maxDepth);
       stroke(120, 100, 100, 0.75);
@@ -345,7 +347,7 @@ function draw() {
           const angleEscape = atan2(
             neighborClosest.position.y - item.position.y,
             neighborClosest.position.x - item.position.x
-          )+PI;
+          ) + PI;
           angleToTarget = angleEscape;
           myTurnRate *= 3;
           if (BOID_DRAW_PROXIMITY_ALARM) {
@@ -383,9 +385,9 @@ function draw() {
         }
       }
       // random turns
-      // if (random() < 0.001) {
-      //   item.direction = random() * TWO_PI;
-      // }
+      if (random() < 0.001) {
+        item.direction = random() * TWO_PI;
+      }
 
       const cosDir = cos(item.direction);
       const sinDir = sin(item.direction);
@@ -450,5 +452,5 @@ function draw() {
   textSize(32);
   fill(100, 0, 100);
   stroke(100, 0, 0);
-  text((1 / (deltaTime / 1000)).toFixed(2), 0, 64);
+  text((1 / (deltaTime / 1000)).toFixed(2), 0, 32);
 }
