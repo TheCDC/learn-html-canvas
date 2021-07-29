@@ -29,6 +29,17 @@ function squareIntersectsWithCircle(
 
   return cornerDistance_sq <= Math.pow(circleRadius, 2);
 }
+function minimumAngleBetween(source, target) {
+  const L = target - source;
+  const a = L;
+  const b = L + PI;
+  const c = L - PI;
+  const smallest = Math.min(Math.abs(a), Math.abs(b), Math.abs(c));
+  if (Math.abs(a) === smallest) return a;
+  if (Math.abs(b) === smallest) return b;
+  if (Math.abs(c) === smallest) return c;
+  // return ((target - source + (TWO_PI * 540) / 360) % TWO_PI) - HALF_PI;
+}
 
 function squareIntersectsWithSquare(x1, y1, height1, x2, y2, height2) {
   // if (x1 + height1 < x2 && y1 + height1 < y2) {
@@ -89,7 +100,7 @@ class QuadTree {
         // console.error('TOO DEEP', currentNode)
         break;
       }
-      // console.log('algo reached', currentNode)
+      // console.log('algorithm reached', currentNode)
 
       // if this node is the max depth and its geometry bounds our items coords
       if (currentNode.depth === this.maxDepth) {
@@ -110,15 +121,15 @@ class QuadTree {
       // else we need to dig deeper
       const xHalfway = currentNode.x + currentNode.sideLength / 2;
       const yHalfway = currentNode.y + currentNode.sideLength / 2;
-      const xoff = x < xHalfway ? 0 : 1;
-      const yoff = y < yHalfway ? 0 : 1;
-      const nodeChildCoord = (xoff << 1) | yoff;
-      const childNode = currentNode.childNodes[nodeChildCoord];
+      const xOffset = x < xHalfway ? 0 : 1;
+      const yOffset = y < yHalfway ? 0 : 1;
+      const nodeChildCoordinate = (xOffset << 1) | yOffset;
+      const childNode = currentNode.childNodes[nodeChildCoordinate];
       if (childNode === null) {
         // create new child node
         const newSideLength = currentNode.sideLength / 2;
-        const newX = currentNode.x + xoff * newSideLength;
-        const newY = currentNode.y + yoff * newSideLength;
+        const newX = currentNode.x + xOffset * newSideLength;
+        const newY = currentNode.y + yOffset * newSideLength;
         const newNode = new QuadTreeNode(
           newSideLength,
           newX,
@@ -127,8 +138,8 @@ class QuadTree {
           true,
           currentNode.depth + 1
         );
-        currentNode.childNodes[nodeChildCoord] = newNode;
-        // curentNode is now a parent and not a leaf
+        currentNode.childNodes[nodeChildCoordinate] = newNode;
+        // currentNode is now a parent and not a leaf
         currentNode.isLeaf = false;
         // console.log('created node', newNode, 'under', currentNode, 'for', x, y)
         currentNode = newNode;
@@ -194,27 +205,38 @@ class Game {
 class Boid {
   constructor(canvas) {
     this.canvas = canvas;
-    this.species = random(16);
+    this.species = random([1, 2, 3, 4]);
     this.position = {
       x: random(canvas.width),
       y: random(canvas.height),
     };
     colorMode(HSB);
 
-    this.color = color(this.species * 16, 100, 100, 1);
+    this.color = color(this.species * 4 * 16, 100, 100, 1);
+    this.direction = random() * TWO_PI;
   }
 }
 
 const WIDTH = 512;
 const HEIGHT = WIDTH;
-
+var DRAW_GEO_CENTER = false;
+var DRAW_SENSE_RANGE = false;
+var DRAW_LINES_TO_NEIGHBORS = true;
+var DRAW_TREE_GRID = true;
 var TREE;
 var CANVAS;
 var ITEMS = [];
+const BOID_SENSE_RANGE = 32;
+const BOID_TURN_RATE = 0.05;
+const BOID_SPEED = 2;
+
+var NUM_BOIDS = 256;
+var frameTimePrev = 0;
+var frameTimeDebugDrawPrevious = 0;
 function setup() {
   CANVAS = createCanvas(WIDTH, HEIGHT);
 
-  for (var ii = 0; ii < 128*4; ii++) {
+  for (var ii = 0; ii < NUM_BOIDS; ii++) {
     const x = random(WIDTH);
     const y = random(HEIGHT);
     const b = new Boid(CANVAS);
@@ -224,70 +246,133 @@ function setup() {
 }
 
 function draw() {
-  TREE = new QuadTree(7, WIDTH);
-  for (const item of ITEMS) {
-  }
+  frameRate(60);
+  background(0, 0, 0, 1);
+
+  TREE = new QuadTree(2, WIDTH);
 
   for (const item of ITEMS) {
     TREE.insert(item, item.position.x, item.position.y);
   }
 
-  background(0);
-
   // ====== Draw QuadTree node bounds
   let queue = [TREE.root];
   while (queue.length > 0) {
     var currentNode = queue.pop();
-
-    noFill();
-    // color(255*currentNode.depth/TREE.maxDepth);
-    stroke(120, 100, 100, 0.5);
-    // rect(
-    //   currentNode.x,
-    //   currentNode.y,
-    //   currentNode.sideLength,
-    //   currentNode.sideLength
-    // );
+    if (DRAW_TREE_GRID) {
+      noFill();
+      // color(255*currentNode.depth/TREE.maxDepth);
+      stroke(120, 100, 100, 0.75);
+      rect(
+        currentNode.x,
+        currentNode.y,
+        currentNode.sideLength,
+        currentNode.sideLength
+      );
+    }
     // ====== Draw items
-
     for (const item of currentNode.items) {
       // get close neighbors and draw lines to them
-      const neighbors = TREE.getWithinRadius(
+      const neighborsAll = TREE.getWithinRadius(
         item.position.x,
         item.position.y,
-        32
+        BOID_SENSE_RANGE
+      ).filter((x) => x != item);
+      const neighborsSameSpecies = neighborsAll.filter(
+        (x) => x.species === item.species
       );
-      if (neighbors.length > 1) {
+      var neighborClosest = null;
+      var distNeighborClosest = null;
+      if (neighborsAll.length > 1) {
+        // find closest neighbor
+        neighborClosest = neighborsAll[0];
+        distNeighborClosest = dist(
+          item.position.x,
+          item.position.y,
+          neighborsAll[0].position.x,
+          neighborsAll[0].position.y
+        );
+
+        for (const o of neighborsAll) {
+          const d = dist(
+            item.position.x,
+            item.position.y,
+            o.position.x,
+            o.position.y
+          );
+          if (d < distNeighborClosest) {
+            neighborClosest = o;
+            distNeighborClosest = d;
+          }
+        }
+      }
+      if (neighborsSameSpecies.length > 0) {
+        angleMode(RADIANS);
         var sumX = 0;
         var sumY = 0;
-        for (const n of neighbors) {
-          // stroke(150, 100, 100, 1);
-          // line(item.position.x, item.position.y, n.position.x, n.position.y);
+        var sumSinDirection = 0;
+        var sumCosDirection = 0;
+        var sumDirectionDiff = 0;
+        for (const n of neighborsSameSpecies) {
+          if (DRAW_LINES_TO_NEIGHBORS) {
+            stroke(item.color);
+
+            line(item.position.x, item.position.y, n.position.x, n.position.y);
+          }
+          if (DRAW_SENSE_RANGE) {
+            stroke(item.color);
+            circle(item.position.x, item.position.y, BOID_SENSE_RANGE);
+          }
           sumX += n.position.x;
           sumY += n.position.y;
+          sumSinDirection += sin(n.direction);
+          sumCosDirection += cos(n.direction);
+          const angBetween = minimumAngleBetween(item.direction, n.direction);
+          sumDirectionDiff += angBetween;
         }
-        var geoCenter = {
-          x: sumX / neighbors.length,
-          y: sumY / neighbors.length,
+
+        const angleToTarget = sumDirectionDiff / neighborsSameSpecies.length;
+        const angleDiff = angleToTarget;
+        const turnAmount = BOID_TURN_RATE * random(1);
+        const direction = Math.sign(angleDiff);
+        if (Math.abs(angleDiff) < turnAmount) {
+          item.direction += angleToTarget;
+        } else {
+          item.direction += direction * turnAmount;
+        }
+
+        const geoCenter = {
+          x: sumX / neighborsSameSpecies.length,
+          y: sumY / neighborsSameSpecies.length,
         };
-        if (item.position.x < geoCenter.x) {
-          item.position.x -= 2;
-        } else {
-          item.position.x++;
+        if (DRAW_GEO_CENTER === true) {
+          // draw line to the point this boid is escaping
+          stroke(80, 0, 100);
+          line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
+          circle(geoCenter.x, geoCenter.y, 4);
         }
-        if (item.position.y < geoCenter.y) {
-          item.position.y -= 2;
-        } else {
-          item.position.y++;
+
+        // turn away from nearest boid
+        if (neighborClosest && distNeighborClosest && distNeighborClosest < 6) {
+          const angleEscape =
+            atan2(
+              neighborClosest.position.y - item.position.y,
+              neighborClosest.position.x - item.position.x
+            ) + PI;
+          item.direction = angleEscape;
         }
-// draw line to the point this boid is escaping
-        stroke(60,0,100);
-        line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
-        circle(geoCenter.x, geoCenter.y, 4);
-      } else {
-        item.position.x++;
-        item.position.y++;
       }
+      // random turns
+      if (random() < 0.001) {
+        item.direction = random() * TWO_PI;
+      }
+
+      const cosDir = cos(item.direction);
+      const sinDir = sin(item.direction);
+      item.position.x += BOID_SPEED * cosDir;
+      item.position.y += BOID_SPEED * sinDir;
+      // ==== BEGIN normalize boid vars
+      // == position
       if (item.position.x < 0) {
         item.position.x = WIDTH + item.position.x;
       }
@@ -297,11 +382,26 @@ function draw() {
 
       item.position.x = item.position.x % WIDTH;
       item.position.y = item.position.y % HEIGHT;
+      // == angle
+      if (item.direction < 0) {
+        item.direction = TWO_PI + item.direction;
+      }
+      if (item.direction > TWO_PI) {
+        item.direction = item.direction % TWO_PI;
+      }
+      // ==== END normalize boid vars
 
       fill(item.color);
-      noStroke();
+      stroke(0, 0, 0);
       circle(item.position.x, item.position.y, 8);
-      fill(item.color + 180);
+      const headingArrowLength = 16;
+      stroke(item.color);
+      line(
+        item.position.x,
+        item.position.y,
+        item.position.x + headingArrowLength * cosDir,
+        item.position.y + headingArrowLength * sinDir
+      );
     }
 
     for (const child in currentNode.childNodes) {
@@ -315,9 +415,9 @@ function draw() {
   // ====== Draw items near mouse
   var positions = [
     [mouseX, mouseY],
-    [mouseX + 128, mouseY],
-    [mouseX + 128, mouseY + 128],
-    [mouseX, mouseY + 128],
+    // [mouseX + 128, mouseY],
+    // [mouseX + 128, mouseY + 128],
+    // [mouseX, mouseY + 128],
   ];
   for (const pos of positions) {
     var neighbors = TREE.getWithinRadius(pos[0], pos[1], 64);
@@ -327,4 +427,8 @@ function draw() {
       line(pos[0], pos[1], n.position.x, n.position.y);
     }
   }
+  textSize(32);
+  fill(100, 0, 100);
+  stroke(100, 0, 0);
+  text((1 / (deltaTime / 1000)).toFixed(2), 0, 64);
 }
