@@ -65,14 +65,34 @@ function squareIntersectsWithSquare(x1, y1, height1, x2, y2, height2) {
 function pointInsideCircle(x, y, cx, cy, cr) {
   return Math.pow(cx - x, 2) + Math.pow(cy - y, 2) <= Math.pow(cr, 2);
 }
+
+function testQuadTreeDelete() {
+  const sideLength = 16
+
+  for (var depth = 1; depth < 5; depth++) {
+    var items = [];
+
+    const t = new QuadTree(depth, 16);
+    for (var offset = 0; offset < sideLength; offset++) {
+
+      const i1 = { id: items.length, position: { x: offset, y: offset } }
+      items.push(i1)
+      t.insert(i1, i1.position.x, i1.position.y)
+    }
+    for (i of items) {
+      t.deleteItem(i, i.position.x, i.position.y)
+    }
+  }
+}
 class QuadTreeNode {
-  constructor(sideLength, x, y, items, isLeaf, depth) {
+  constructor(sideLength, x, y, items, isLeaf, depth, parent) {
     this.sideLength = sideLength;
     this.x = x;
     this.y = y;
     this.items = items;
     this.isLeaf = isLeaf;
     this.depth = depth;
+    this.parent = parent
     // 0,0 1,0
     // 0,1 1,1
     this.childNodes = {
@@ -81,6 +101,9 @@ class QuadTreeNode {
       0b01: null,
       0b11: null,
     };
+  }
+  containsPoint(x, y) {
+    return (this.x <= x && this.x + this.sideLength < x && this.y <= y && this.y + this.sideLength < y)
   }
 }
 
@@ -91,6 +114,39 @@ class QuadTree {
     }
     this.maxDepth = maxDepth;
     this.root = new QuadTreeNode(sideLength, 0, 0, [], true, 0);
+  }
+  deleteItem(item, x, y, currentNode) {
+    if (currentNode == null) {
+      currentNode = this.root
+    }
+    if (currentNode.isLeaf) {
+      if (currentNode.items.some(x => x.id === item.id)) {
+
+        currentNode.items = currentNode.items.filter(i => i.id !== item.id)
+      }
+      else {
+        // reached where the item should be but it was never inserted into the tree
+        return null;
+
+      }
+    }
+    else {
+      for (const key in currentNode.childNodes) {
+        const child = currentNode.childNodes[key]
+        if (child && child.containsPoint(x, y)) {
+          const deletedFrom = this.deleteItem(item, x, y, child)
+          if (child.items.length === 0) {
+            currentNode.childNodes[key] = null
+          }
+          return deletedFrom;
+        }
+      }
+      // console.error('somehow reached a leaf node that does not contain the cords')
+    }
+
+  }
+  findContainingNode(item, x, y) {
+
   }
   insert(item, x, y) {
     // console.log('insert', item, '@', x, y)
@@ -160,22 +216,22 @@ class QuadTree {
         continue;
       }
       if (
-        // squareIntersectsWithCircle(
-        //   currentNode.x,
-        //   currentNode.y,
-        //   currentNode.sideLength,
-        //   x,
-        //   y,
-        //   r
-        // )
-        squareIntersectsWithSquare(
-          x - r,
-          y - r,
-          r,
+        squareIntersectsWithCircle(
           currentNode.x,
           currentNode.y,
-          currentNode.sideLength
+          currentNode.sideLength,
+          x,
+          y,
+          r
         )
+        // squareIntersectsWithSquare(
+        //   x - r,
+        //   y - r,
+        //   r,
+        //   currentNode.x,
+        //   currentNode.y,
+        //   currentNode.sideLength
+        // )
       ) {
         matchedLeaves.push(currentNode);
         queue.push(currentNode.childNodes[0b00]);
@@ -228,8 +284,8 @@ var TREE;
 var CANVAS;
 var ITEMS = [];
 var QUAD_TREE_DRAW_GRID = true;
-const QUAD_TREE_DEPTH = 2;
-const BOID_SENSE_RANGE = 16;
+const QUAD_TREE_DEPTH = 4;
+const BOID_SENSE_RANGE = 32;
 const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 2;
 const BOID_SPACING_MINIMUM = 4;
@@ -239,6 +295,8 @@ var NUM_BOIDS = 512;
 var frameTimePrev = 0;
 var frameTimeDebugDrawPrevious = 0;
 function setup() {
+  // ===== TESTS
+  testQuadTreeDelete()
   CANVAS = createCanvas(WIDTH, HEIGHT);
 
   for (var ii = 0; ii < NUM_BOIDS; ii++) {
