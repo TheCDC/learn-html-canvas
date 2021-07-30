@@ -277,7 +277,7 @@ class Boid {
   constructor(id, canvas) {
     this.id = id;
     this.canvas = canvas;
-    this.species = random([1, 2, 3]);
+    this.species = random([1, 2, 3, 4]);
     this.position = {
       x: random(canvas.width),
       y: random(canvas.height),
@@ -288,22 +288,48 @@ class Boid {
     this.direction = PI / 2;
   }
 }
+const BUTTON_FUNCTIONS = {
+  DRAW_GEO_CENTER: {
+    text: "DRAW_GEO_CENTER",
+    action: () => (DRAW_GEO_CENTER = !DRAW_GEO_CENTER),
+  },
+  DRAW_SENSE_RANGE: {
+    text: "DRAW_SENSE_RANGE",
+    action: () => (DRAW_SENSE_RANGE = !DRAW_SENSE_RANGE),
+  },
+  BOID_DRAW_PROXIMITY_ALARM: {
+    text: "BOID_DRAW_PROXIMITY_ALARM",
+    action: () => (BOID_DRAW_PROXIMITY_ALARM = !BOID_DRAW_PROXIMITY_ALARM),
+  },
+  DRAW_LINES_TO_NEIGHBORS: {
+    text: "DRAW_LINES_TO_NEIGHBORS",
+    action: () => (DRAW_LINES_TO_NEIGHBORS = !DRAW_LINES_TO_NEIGHBORS),
+  },
+  QUAD_TREE_DRAW_GRID: {
+    text: "QUAD_TREE_DRAW_GRID",
+    action: () => (QUAD_TREE_DRAW_GRID = !QUAD_TREE_DRAW_GRID),
+  },
+  RANDOMIZE_DIRECTIONS: {
+    text: "RANDOMIZE_DIRECTIONS()",
+    action: () => ITEMS.map((i) => (i.direction = random() * 2 * PI)),
+  },
+};
 
-const WIDTH = 512;
-const HEIGHT = WIDTH;
 var DRAW_GEO_CENTER = false;
 var DRAW_SENSE_RANGE = false;
 var DRAW_LINES_TO_NEIGHBORS = true;
+var QUAD_TREE_DRAW_GRID = true;
+var BOID_DRAW_PROXIMITY_ALARM = false;
 var TREE;
 var CANVAS;
 var ITEMS = [];
-var QUAD_TREE_DRAW_GRID = true;
+const WIDTH = 512;
+const HEIGHT = WIDTH;
 const QUAD_TREE_DEPTH = 4;
 const BOID_SENSE_RANGE = 64;
 const BOID_TURN_RATE = 0.1;
-const BOID_SPEED = 2;
+const BOID_SPEED = 1;
 const BOID_SPACING_MINIMUM = 16;
-const BOID_DRAW_PROXIMITY_ALARM = true;
 
 var NUM_BOIDS = 128;
 var frameTimePrev = 0;
@@ -317,8 +343,14 @@ function setup() {
     const x = random(WIDTH);
     const y = random(HEIGHT);
     const b = new Boid(ii, CANVAS);
-    const item = { name: ii, position: { x: x, y: y } };
     ITEMS.push(b);
+  }
+
+  for (const key in BUTTON_FUNCTIONS) {
+    const o = BUTTON_FUNCTIONS[key];
+    console.log(key, o);
+    const b = createButton(o.text);
+    b.mousePressed(o.action);
   }
 }
 
@@ -410,14 +442,22 @@ function draw() {
           neighborClosest &&
           distNeighborClosest &&
           distNeighborClosest < BOID_SPACING_MINIMUM;
-        const angleEscape = proximityAlarm
-          ? atan2(
-              neighborClosest.position.y - item.position.y,
-              neighborClosest.position.x - item.position.x
-            ) + PI
+        const angleEscapeProjectionDifferential = proximityAlarm
+          ? minimumAngleBetween(
+              item.direction,
+              atan2(
+                neighborClosest.position.y - item.position.y,
+                neighborClosest.position.x - item.position.x
+              )
+            )
           : item.direction;
+        const angleEscapeActualDifferential =
+          Math.abs(angleEscapeProjectionDifferential) - PI < 0.01
+            ? [PI / 2, -PI / 2][item.id % 2]
+            : angleEscapeProjectionDifferential;
+        const angleEscape = proximityAlarm ? angleEscapeActualDifferential : 0;
         const angleDiffToTarget = proximityAlarm
-          ? minimumAngleBetween(item.direction, angleEscape)
+          ? angleEscape
           : sumDirectionDiff / neighborsSameSpecies.length;
         const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
@@ -439,8 +479,8 @@ function draw() {
           line(
             item.position.x,
             item.position.y,
-            item.position.x + 16 * cos(angleEscape),
-            item.position.y + 16 * sin(angleEscape)
+            item.position.x + 16 * cos(angleEscape + item.direction),
+            item.position.y + 16 * sin(angleEscape + item.direction)
           );
           circle(item.position.x - 8, item.position.y, 4);
         }
@@ -452,7 +492,7 @@ function draw() {
         }
       }
       // random turns
-      if (random() < 0.005) {
+      if (random() < 0.001) {
         item.direction = random() * TWO_PI;
       }
 
