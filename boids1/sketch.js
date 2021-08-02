@@ -341,11 +341,12 @@ const BOID_SENSE_RANGE = 64;
 const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 1;
 const BOID_SPACING_MINIMUM = 16;
-
 var NUM_BOIDS = 128;
 var frameTimePrev = 0;
 var frameTimeDebugDrawPrevious = 0;
 var PARAMS;
+var frameTimes = [];
+
 function setup() {
   // ===== TESTS
   testQuadTreeDelete();
@@ -469,7 +470,7 @@ function draw() {
           )
           : item.direction;
         const angleEscapeActualDifferential =
-          Math.abs(angleEscapeProjectionDifferential) - PI < 0.01
+          PI - Math.abs(angleEscapeProjectionDifferential) < 0.1
             ? [PI / 2, -PI / 2][item.id % 2]
             : angleEscapeProjectionDifferential;
         const angleEscape = proximityAlarm ? angleEscapeActualDifferential : 0;
@@ -590,8 +591,14 @@ function draw() {
       line(pos[0], pos[1], n.position.x, n.position.y);
     }
   }
-  textSize(32);
+  frameTimes.push(deltaTime);
+  while (frameTimes.length > 60) {
+    frameTimes.splice(0, 1);
+  }
+  let frameTimeSum = frameTimes.reduce((s, v) => s + v, 0);
+
+  textSize(24);
   fill(100, 0, 100);
   stroke(100, 0, 0);
-  text((1 / (deltaTime / 1000)).toFixed(2), 0, 32);
+  text((1 / (frameTimeSum / frameTimes.length / 1000)).toFixed(2), 0, 24);
 }
