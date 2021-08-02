@@ -115,15 +115,36 @@ function testQuadTreeDelete() {
     }
   }
 }
+
+function testQuadTreeUpsert() {
+  const sideLength = 16;
+
+  for (var depth = 1; depth < 5; depth++) {
+    var items = [];
+
+    const t = new QuadTree(depth, 16);
+    for (var offset = 0; offset < sideLength; offset++) {
+      const i1 = { id: items.length, position: { x: offset, y: offset } };
+      items.push(i1);
+      t.insert(i1, i1.position.x, i1.position.y);
+    }
+    for (var item of items) {
+      item.x = random(sideLength);
+      item.y = random(sideLength);
+      t.upsert(item, item.position.x, item.position.y)
+    }
+    for (i of items) {
+      t.deleteItem(i, i.position.x, i.position.y);
+    }
+  }
+}
 class QuadTreeNode {
-  constructor(sideLength, x, y, items, isLeaf, depth, parent) {
+  constructor(sideLength, x, y, items, depth) {
     this.sideLength = sideLength;
     this.x = x;
     this.y = y;
     this.items = items;
-    this.isLeaf = isLeaf;
     this.depth = depth;
-    this.parent = parent;
     // 0,0 1,0
     // 0,1 1,1
     this.childNodes = {
@@ -149,7 +170,7 @@ class QuadTree {
       maxDepth = 3;
     }
     this.maxDepth = maxDepth;
-    this.root = new QuadTreeNode(sideLength, 0, 0, [], true, 0);
+    this.root = new QuadTreeNode(sideLength, 0, 0, [], 0);
   }
   deleteItem(item, x, y, currentNode) {
     if (currentNode == null) {
@@ -176,7 +197,56 @@ class QuadTree {
       // console.error('somehow reached a leaf node that does not contain the cords')
     }
   }
-  findContainingNode(item, x, y) { }
+  _upsert_inner(item, x, y, currentNode) {
+    let id = item.id
+    let ret = null;
+    //max depth
+    if (currentNode.depth === this.maxDepth) {
+      currentNode.items = [...currentNode.items.filter(x => x.id !== id), item]
+      return this.insert(item.x, y)
+
+    }
+    if (currentNode.items.some(x => x.id === id)) { //node contains item
+      // item is still within the geometry of this node
+      if (currentNode.containsPoint(item.x, item.y)) {
+        return currentNode;
+      }
+      // else insert the item where it belongs
+      currentNode.items = currentNode.items.filter(x => x.id !== id)
+      return this.insert(item.x, y)
+    }
+    const xHalfway = currentNode.x + currentNode.sideLength / 2;
+    const yHalfway = currentNode.y + currentNode.sideLength / 2;
+    const xOffset = x < xHalfway ? 0 : 1;
+    const yOffset = y < yHalfway ? 0 : 1;
+    const nodeChildCoordinate = (xOffset << 1) | yOffset;
+    let childNode = currentNode.childNodes[nodeChildCoordinate];
+    if (childNode === null) {
+      // create new child node
+      const newSideLength = currentNode.sideLength / 2;
+      const newX = currentNode.x + xOffset * newSideLength;
+      const newY = currentNode.y + yOffset * newSideLength;
+      const newNode = new QuadTreeNode(
+        newSideLength,
+        newX,
+        newY,
+        [],
+        currentNode.depth + 1
+      );
+      currentNode.childNodes[nodeChildCoordinate] = newNode;
+      childNode = newNode
+    }
+    ret = this._upsert_inner(item, x, y, childNode)
+    if (ret.items.length === 0) {
+      currentNode.childNodes[nodeChildCoordinate] = null;
+
+    }
+    return ret;
+
+  }
+  upsert(item, x, y) {
+    return this._upsert_inner(item, x, y, this.root);
+  }
   insert(item, x, y) {
     // console.log('insert', item, '@', x, y)
     let i = 0;
@@ -221,12 +291,10 @@ class QuadTree {
           newX,
           newY,
           [],
-          true,
+
           currentNode.depth + 1
         );
         currentNode.childNodes[nodeChildCoordinate] = newNode;
-        // currentNode is now a parent and not a leaf
-        currentNode.isLeaf = false;
         // console.log('created node', newNode, 'under', currentNode, 'for', x, y)
         currentNode = newNode;
       } else {
@@ -234,6 +302,7 @@ class QuadTree {
       }
       i++;
     }
+    return currentNode;
   }
   getWithinRadius(x, y, r) {
     // traverse tree and examine all leaf nodes that contain at least one point in the target radius
@@ -330,6 +399,11 @@ const BUTTON_FUNCTIONS = {
   },
 };
 
+function tests() {
+  testQuadTreeDelete();
+  testQuadTreeUpsert();
+
+}
 var DRAW_GEO_CENTER = false;
 var DRAW_SENSE_RANGE = false;
 var DRAW_LINES_TO_NEIGHBORS = true;
@@ -346,14 +420,14 @@ const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 1;
 const BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
+
 var frameTimePrev = 0;
 var frameTimeDebugDrawPrevious = 0;
 var PARAMS;
 var frameTimes = [];
 var DISABLE_DRAW_OBJECTS = false;
 function setup() {
-  // ===== TESTS
-  testQuadTreeDelete();
+  tests();
   const params = getUrlParams();
   QUAD_TREE_DEPTH = params.QUAD_TREE_DEPTH
   NUM_BOIDS = params.NUM_BOIDS
@@ -363,8 +437,6 @@ function setup() {
   CANVAS = createCanvas(params.width, params.height);
 
   for (var ii = 0; ii < NUM_BOIDS; ii++) {
-    const x = random(WIDTH);
-    const y = random(HEIGHT);
     const b = new Boid(ii, CANVAS);
     ITEMS.push(b);
   }
@@ -375,6 +447,8 @@ function setup() {
     const b = createButton(o.text);
     b.mousePressed(o.action);
   }
+
+
 }
 
 function draw() {
@@ -386,9 +460,6 @@ function draw() {
 
   for (const item of ITEMS) {
     TREE.insert(item, item.position.x, item.position.y);
-  }
-  // don't draw anything 
-  if (!DISABLE_DRAW_OBJECTS) {
   }
 
   // ====== Draw QuadTree node bounds
