@@ -3,10 +3,14 @@ function getUrlParams() {
   const height = urlParams.get('height')
   const width = urlParams.get('width')
   const QUAD_TREE_DEPTH = urlParams.get('QUAD_TREE_DEPTH')
+  const NUM_BOIDS = urlParams.get('NUM_BOIDS')
+  const DISABLE_DRAW_OBJECTS = urlParams.get('DISABLE_DRAW_OBJECTS')
   return {
     height: height ? Number(height) : 512,
     width: width ? Number(width) : 512,
     QUAD_TREE_DEPTH: QUAD_TREE_DEPTH ? Number(QUAD_TREE_DEPTH) : 4,
+    NUM_BOIDS: NUM_BOIDS ? Number(NUM_BOIDS) : 128,
+    DISABLE_DRAW_OBJECTS: DISABLE_DRAW_OBJECTS === "1",
   }
 }
 function normalizeAngle(ang) {
@@ -346,13 +350,14 @@ var frameTimePrev = 0;
 var frameTimeDebugDrawPrevious = 0;
 var PARAMS;
 var frameTimes = [];
-
+var DISABLE_DRAW_OBJECTS = false;
 function setup() {
   // ===== TESTS
   testQuadTreeDelete();
   const params = getUrlParams();
   QUAD_TREE_DEPTH = params.QUAD_TREE_DEPTH
-
+  NUM_BOIDS = params.NUM_BOIDS
+  DISABLE_DRAW_OBJECTS = params.DISABLE_DRAW_OBJECTS
 
 
   CANVAS = createCanvas(params.width, params.height);
@@ -382,12 +387,15 @@ function draw() {
   for (const item of ITEMS) {
     TREE.insert(item, item.position.x, item.position.y);
   }
+  // don't draw anything 
+  if (!DISABLE_DRAW_OBJECTS) {
+  }
 
   // ====== Draw QuadTree node bounds
   let queue = [TREE.root];
   while (queue.length > 0) {
     var currentNode = queue.pop();
-    if (QUAD_TREE_DRAW_GRID) {
+    if (!DISABLE_DRAW_OBJECTS && QUAD_TREE_DRAW_GRID) {
       noFill();
       // color(255*currentNode.depth/TREE.maxDepth);
       stroke(120, 100, 100, 0.75);
@@ -441,7 +449,7 @@ function draw() {
         var sumCosDirection = 0;
         var sumDirectionDiff = 0;
         for (const n of neighborsSameSpecies) {
-          if (DRAW_LINES_TO_NEIGHBORS) {
+          if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
             stroke(item.color);
 
             line(item.position.x, item.position.y, n.position.x, n.position.y);
@@ -491,7 +499,7 @@ function draw() {
           y: sumY / neighborsSameSpecies.length,
         };
 
-        if (proximityAlarm && BOID_DRAW_PROXIMITY_ALARM) {
+        if (!DISABLE_DRAW_OBJECTS && proximityAlarm && BOID_DRAW_PROXIMITY_ALARM) {
           fill(30, 100, 100);
           stroke(0, 100, 100);
           line(
@@ -537,7 +545,7 @@ function draw() {
         item.direction = item.direction % TWO_PI;
       }
       // ==== END normalize boid vars
-      if (DRAW_SENSE_RANGE) {
+      if (!DISABLE_DRAW_OBJECTS && DRAW_SENSE_RANGE) {
         noFill();
         stroke(
           hue(item.color),
@@ -555,17 +563,20 @@ function draw() {
         );
         circle(item.position.x, item.position.y, BOID_SPACING_MINIMUM * 2);
       }
-      fill(item.color);
-      stroke(0, 0, 0);
-      circle(item.position.x, item.position.y, 8);
-      const headingArrowLength = 16;
-      stroke(item.color);
-      line(
-        item.position.x,
-        item.position.y,
-        item.position.x + headingArrowLength * cosDir,
-        item.position.y + headingArrowLength * sinDir
-      );
+      if (!DISABLE_DRAW_OBJECTS) {
+
+        fill(item.color);
+        stroke(0, 0, 0);
+        circle(item.position.x, item.position.y, 8);
+        const headingArrowLength = 16;
+        stroke(item.color);
+        line(
+          item.position.x,
+          item.position.y,
+          item.position.x + headingArrowLength * cosDir,
+          item.position.y + headingArrowLength * sinDir
+        );
+      }
     }
 
     for (const child in currentNode.childNodes) {
@@ -586,11 +597,15 @@ function draw() {
   for (const pos of positions) {
     var neighbors = TREE.getWithinRadius(pos[0], pos[1], BOID_SENSE_RANGE);
     for (const n of neighbors) {
-      stroke(60, 100, 100);
-      // stroke(255)
-      line(pos[0], pos[1], n.position.x, n.position.y);
+      if (!DISABLE_DRAW_OBJECTS) {
+
+        stroke(60, 100, 100);
+        // stroke(255)
+        line(pos[0], pos[1], n.position.x, n.position.y);
+      }
     }
   }
+
   frameTimes.push(deltaTime);
   while (frameTimes.length > 60) {
     frameTimes.splice(0, 1);
