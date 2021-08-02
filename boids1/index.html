@@ -1,22 +1,31 @@
 <!DOCTYPE html>
 <html lang="">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>p5.js example</title>
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+    <script src="../p5.js"></script>
+    <script src="../addons/p5.sound.min.js"></script>
+    <script src="sketch.js"></script>
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>p5.js example</title>
-  <style>
-    body {
-      padding: 0;
-      margin: 0;
-    }
-  </style>
-  <script src="../p5.js"></script>
-  <script src="../addons/p5.sound.min.js"></script>
-  <script src="sketch.js"></script>
-</head>
-
-<body>
-</body>
-
+  <body>
+    <form action="" method="GET">
+      <p>
+        width: <input name="width" type="number" value="512" /> height:
+        <input name="height" type="number" value="512" />
+      </p>
+      <p>
+        QUAD_TREE_DEPTH:
+        <input name="QUAD_TREE_DEPTH" type="number" value="4" /> height:
+      </p>
+      <input type="submit" />
+    </form>
+  </body>
 </html>

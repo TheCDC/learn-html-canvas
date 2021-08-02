@@ -1,3 +1,14 @@
+function getUrlParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const height = urlParams.get('height')
+  const width = urlParams.get('width')
+  const QUAD_TREE_DEPTH = urlParams.get('QUAD_TREE_DEPTH')
+  return {
+    height: height ? Number(height) : 512,
+    width: width ? Number(width) : 512,
+    QUAD_TREE_DEPTH: QUAD_TREE_DEPTH ? Number(QUAD_TREE_DEPTH) : 4,
+  }
+}
 function normalizeAngle(ang) {
   // => [0,2pi]
   ang = ang % PI;
@@ -161,7 +172,7 @@ class QuadTree {
       // console.error('somehow reached a leaf node that does not contain the cords')
     }
   }
-  findContainingNode(item, x, y) {}
+  findContainingNode(item, x, y) { }
   insert(item, x, y) {
     // console.log('insert', item, '@', x, y)
     let i = 0;
@@ -325,7 +336,7 @@ var CANVAS;
 var ITEMS = [];
 const WIDTH = 512;
 const HEIGHT = WIDTH;
-const QUAD_TREE_DEPTH = 4;
+var QUAD_TREE_DEPTH = 4;
 const BOID_SENSE_RANGE = 64;
 const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 1;
@@ -334,10 +345,16 @@ const BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
 var frameTimePrev = 0;
 var frameTimeDebugDrawPrevious = 0;
+var PARAMS;
 function setup() {
   // ===== TESTS
   testQuadTreeDelete();
-  CANVAS = createCanvas(WIDTH, HEIGHT);
+  const params = getUrlParams();
+  QUAD_TREE_DEPTH = params.QUAD_TREE_DEPTH
+
+
+
+  CANVAS = createCanvas(params.width, params.height);
 
   for (var ii = 0; ii < NUM_BOIDS; ii++) {
     const x = random(WIDTH);
@@ -444,12 +461,12 @@ function draw() {
           distNeighborClosest < BOID_SPACING_MINIMUM;
         const angleEscapeProjectionDifferential = proximityAlarm
           ? minimumAngleBetween(
-              item.direction,
-              atan2(
-                neighborClosest.position.y - item.position.y,
-                neighborClosest.position.x - item.position.x
-              )
+            item.direction,
+            atan2(
+              neighborClosest.position.y - item.position.y,
+              neighborClosest.position.x - item.position.x
             )
+          )
           : item.direction;
         const angleEscapeActualDifferential =
           Math.abs(angleEscapeProjectionDifferential) - PI < 0.01
