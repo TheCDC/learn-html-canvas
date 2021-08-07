@@ -5,12 +5,14 @@ function getUrlParams() {
   const QUAD_TREE_DEPTH = urlParams.get('QUAD_TREE_DEPTH')
   const NUM_BOIDS = urlParams.get('NUM_BOIDS')
   const DISABLE_DRAW_OBJECTS = urlParams.get('DISABLE_DRAW_OBJECTS')
+  const DRAW_LINES_TO_NEIGHBORS = urlParams.get('DRAW_LINES_TO_NEIGHBORS')
   return {
     height: height ? Number(height) : 512,
     width: width ? Number(width) : 512,
     QUAD_TREE_DEPTH: QUAD_TREE_DEPTH ? Number(QUAD_TREE_DEPTH) : 4,
     NUM_BOIDS: NUM_BOIDS ? Number(NUM_BOIDS) : 128,
     DISABLE_DRAW_OBJECTS: DISABLE_DRAW_OBJECTS === "1",
+    DRAW_LINES_TO_NEIGHBORS: DRAW_LINES_TO_NEIGHBORS === "1",
   }
 }
 function normalizeAngle(ang) {
@@ -97,7 +99,33 @@ function squareIntersectsWithSquare(x1, y1, height1, x2, y2, height2) {
 function pointInsideCircle(x, y, cx, cy, cr) {
   return Math.pow(cx - x, 2) + Math.pow(cy - y, 2) <= Math.pow(cr, 2);
 }
+function testQuadTreeNode() {
+  console.debug('testQuadTreeNode')
+  const depth = 2
+  const width = 16
+  const n1 = new QuadTreeNode(null, width, 0, 0, [], 0)
+  const i1 = { position: { x: 0, y: 0 } }
+  const n2 = n1.insert(i1, i1.position.x, i1.position.y, depth)
+  if (n2 === null) {
+    console.error(testQuadTreeNode, n1, n2)
+  }
 
+  const found1 = n1.getWithinRadius(0, 0, 1)
+  if (found1.length !== 1) {
+    console.error('getWithinRadius', found1)
+  }
+
+  const i2 = { position: { x: width, y: width } }
+  const n3 = n1.insert(i2, i1.position.x, i1.position.y, depth)
+  if (n3 === null) {
+    console.error(testQuadTreeNode, n1, n2)
+  }
+
+  const found2 = n1.getWithinRadius(width, width, 1)
+  if (found2.length !== 1) {
+    console.error('getWithinRadius', found2)
+  }
+}
 function testQuadTreeDelete() {
   const sideLength = 16;
 
@@ -211,194 +239,38 @@ class QuadTreeNode {
     }
 
   }
-}
-
-class QuadTree {
-  constructor(maxDepth, sideLength) {
-    if (maxDepth === undefined) {
-      maxDepth = 3;
-    }
-    this.maxDepth = maxDepth;
-    this.root = new QuadTreeNode(sideLength, 0, 0, [], 0);
-  }
-  deleteItem(item, x, y, currentNode) {
-    if (currentNode == null) {
-      currentNode = this.root;
-    }
-    if (currentNode.isLeaf) {
-      if (currentNode.items.some((x) => x.id === item.id)) {
-        currentNode.items = currentNode.items.filter((i) => i.id !== item.id);
-      } else {
-        // reached where the item should be but it was never inserted into the tree
-        return null;
-      }
-    } else {
-      for (const key in currentNode.childNodes) {
-        const child = currentNode.childNodes[key];
-        if (child && child.containsPoint(x, y)) {
-          const deletedFrom = this.deleteItem(item, x, y, child);
-          if (child.items.length === 0) {
-            currentNode.childNodes[key] = null;
-          }
-          return deletedFrom;
-        }
-      }
-      // console.error('somehow reached a leaf node that does not contain the cords')
-    }
-  }
-  _upsert_inner(item, x, y, currentNode) {
-    let id = item.id
-    let ret = null;
-    //max depth
-    if (currentNode.depth === this.maxDepth) {
-      currentNode.items = [...currentNode.items.filter(x => x.id !== id), item]
-      return this.insert(item.x, y)
-
-    }
-    if (currentNode.items.some(x => x.id === id)) { //node contains item
-      // item is still within the geometry of this node
-      if (currentNode.containsPoint(item.x, item.y)) {
-        return currentNode;
-      }
-      // else insert the item where it belongs
-      currentNode.items = currentNode.items.filter(x => x.id !== id)
-      return this.insert(item.x, y)
-    }
-    const xHalfway = currentNode.x + currentNode.sideLength / 2;
-    const yHalfway = currentNode.y + currentNode.sideLength / 2;
-    const xOffset = x < xHalfway ? 0 : 1;
-    const yOffset = y < yHalfway ? 0 : 1;
-    const nodeChildCoordinate = (xOffset << 1) | yOffset;
-    let childNode = currentNode.childNodes[nodeChildCoordinate];
-    if (childNode === null) {
-      // create new child node
-      const newSideLength = currentNode.sideLength / 2;
-      const newX = currentNode.x + xOffset * newSideLength;
-      const newY = currentNode.y + yOffset * newSideLength;
-      const newNode = new QuadTreeNode(
-        newSideLength,
-        newX,
-        newY,
-        [],
-        currentNode.depth + 1
-      );
-      currentNode.childNodes[nodeChildCoordinate] = newNode;
-      childNode = newNode
-    }
-    ret = this._upsert_inner(item, x, y, childNode)
-    if (ret.items.length === 0) {
-      currentNode.childNodes[nodeChildCoordinate] = null;
-
-    }
-    return ret;
-
-  }
-  upsert(item, x, y) {
-    return this._upsert_inner(item, x, y, this.root);
-  }
-  insert(item, x, y) {
-    // console.log('insert', item, '@', x, y)
-    let i = 0;
-    let currentNode = this.root;
-    while (true) {
-      if (i > this.maxDepth) {
-        // console.error('TOO DEEP', currentNode)
-        break;
-      }
-      // console.log('algorithm reached', currentNode)
-
-      // if this node is the max depth and its geometry bounds our items coords
-      if (currentNode.depth === this.maxDepth) {
-        if (
-          currentNode.x <= x &&
-          x < currentNode.x + currentNode.sideLength &&
-          currentNode.y <= y &&
-          y < currentNode.y + currentNode.sideLength
-        ) {
-          currentNode.items.push(item);
-          // console.log("successfully inserted", item, x, y, "@", currentNode);
-          break;
-        } else {
-          // console.error('Hit depth but missed right node', x, y, currentNode)
-        }
-      }
-
-      // else we need to dig deeper
-      const xHalfway = currentNode.x + currentNode.sideLength / 2;
-      const yHalfway = currentNode.y + currentNode.sideLength / 2;
-      const xOffset = x < xHalfway ? 0 : 1;
-      const yOffset = y < yHalfway ? 0 : 1;
-      const nodeChildCoordinate = (xOffset << 1) | yOffset;
-      const childNode = currentNode.childNodes[nodeChildCoordinate];
-      if (childNode === null) {
-        // create new child node
-        const newSideLength = currentNode.sideLength / 2;
-        const newX = currentNode.x + xOffset * newSideLength;
-        const newY = currentNode.y + yOffset * newSideLength;
-        const newNode = new QuadTreeNode(
-          newSideLength,
-          newX,
-          newY,
-          [],
-
-          currentNode.depth + 1
-        );
-        currentNode.childNodes[nodeChildCoordinate] = newNode;
-        // console.log('created node', newNode, 'under', currentNode, 'for', x, y)
-        currentNode = newNode;
-      } else {
-        currentNode = childNode;
-      }
-      i++;
-    }
-    return currentNode;
-  }
   getWithinRadius(x, y, r) {
-    // traverse tree and examine all leaf nodes that contain at least one point in the target radius
-    let matchedLeaves = [];
-    let queue = [this.root];
-    while (queue.length > 0) {
-      let currentNode = queue.pop();
-      if (currentNode === null) {
-        continue;
+    if (!squareIntersectsWithSquare(this.x, this.y, this.sideLength, x - r, y - r, r * 2)) {
+      if (this.parent !== null) {
+
+        return this.parent.getWithinRadius(x, y, r)
       }
-      if (
-        // squareIntersectsWithCircle(
-        //   currentNode.x,
-        //   currentNode.y,
-        //   currentNode.sideLength,
-        //   x,
-        //   y,
-        //   r
-        // )
-        squareIntersectsWithSquare(
-          x - r,
-          y - r,
-          r,
-          currentNode.x,
-          currentNode.y,
-          currentNode.sideLength
-        )
-      ) {
-        matchedLeaves.push(currentNode);
-        queue.push(currentNode.childNodes[0b00]);
-        queue.push(currentNode.childNodes[0b10]);
-        queue.push(currentNode.childNodes[0b01]);
-        queue.push(currentNode.childNodes[0b11]);
-      }
+      return []
     }
-    let results = [];
-    for (const node of matchedLeaves) {
-      // console.log(node);
-      for (const item of node.items) {
+    const resultMine = [];
+    if (this.items.length > 0) {
+      for (const item of this.items) {
         if (pointInsideCircle(item.position.x, item.position.y, x, y, r)) {
-          results.push(item);
+          resultMine.push(item)
         }
       }
+
     }
-    return results;
+    let resultChild = []
+    for (const addressBits in this.childNodes) {
+      const n = this.childNodes[addressBits]
+      if (n !== null) {
+        if (squareIntersectsWithSquare(n.x, n.y, n.sideLength, x - r, y - r, r * 2)) {
+
+          resultChild = resultChild.concat(n.getWithinRadius(x, y, r))
+        }
+
+      }
+    }
+    return resultMine.concat(resultChild)
   }
 }
+
 
 class Game {
   constructor(canvas) {
@@ -449,8 +321,9 @@ const BUTTON_FUNCTIONS = {
 };
 
 function tests() {
-  testQuadTreeDelete();
-  testQuadTreeUpsert();
+  testQuadTreeNode();
+  // testQuadTreeDelete();
+  // testQuadTreeUpsert();
 
 }
 var DRAW_GEO_CENTER = false;
@@ -481,6 +354,7 @@ function setup() {
   QUAD_TREE_DEPTH = params.QUAD_TREE_DEPTH
   NUM_BOIDS = params.NUM_BOIDS
   DISABLE_DRAW_OBJECTS = params.DISABLE_DRAW_OBJECTS
+  DRAW_LINES_TO_NEIGHBORS = params.DRAW_LINES_TO_NEIGHBORS
 
 
   CANVAS = createCanvas(params.width, params.height);
@@ -492,7 +366,6 @@ function setup() {
 
   for (const key in BUTTON_FUNCTIONS) {
     const o = BUTTON_FUNCTIONS[key];
-    console.log(key, o);
     const b = createButton(o.text);
     b.mousePressed(o.action);
   }
@@ -505,14 +378,14 @@ function draw() {
   background(0, 0, 0, 1);
   angleMode(RADIANS);
 
-  TREE = new QuadTree(QUAD_TREE_DEPTH, WIDTH);
+  TREE = new QuadTreeNode(null, WIDTH, 0, 0, [], 0);
 
   for (const item of ITEMS) {
-    TREE.insert(item, item.position.x, item.position.y);
+    TREE.insert(item, item.position.x, item.position.y, QUAD_TREE_DEPTH);
   }
 
   // ====== Draw QuadTree node bounds
-  let queue = [TREE.root];
+  let queue = [TREE];
   while (queue.length > 0) {
     var currentNode = queue.pop();
     if (!DISABLE_DRAW_OBJECTS && QUAD_TREE_DRAW_GRID) {
