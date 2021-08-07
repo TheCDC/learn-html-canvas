@@ -3,6 +3,8 @@ function getUrlParams() {
   const height = urlParams.get('height')
   const width = urlParams.get('width')
   const QUAD_TREE_DEPTH = urlParams.get('QUAD_TREE_DEPTH')
+  const BOID_SENSE_RANGE = urlParams.get('BOID_SENSE_RANGE')
+  const BOID_SPACING_MINIMUM = urlParams.get('BOID_SPACING_MINIMUM')
   const NUM_BOIDS = urlParams.get('NUM_BOIDS')
   const DISABLE_DRAW_OBJECTS = urlParams.get('DISABLE_DRAW_OBJECTS')
   const DRAW_LINES_TO_NEIGHBORS = urlParams.get('DRAW_LINES_TO_NEIGHBORS')
@@ -10,9 +12,11 @@ function getUrlParams() {
     height: height ? Number(height) : 512,
     width: width ? Number(width) : 512,
     QUAD_TREE_DEPTH: QUAD_TREE_DEPTH ? Number(QUAD_TREE_DEPTH) : 4,
+    BOID_SENSE_RANGE: BOID_SENSE_RANGE ? Number(BOID_SENSE_RANGE) : 64,
+    BOID_SPACING_MINIMUM: BOID_SPACING_MINIMUM ? Number(BOID_SPACING_MINIMUM) : 16,
     NUM_BOIDS: NUM_BOIDS ? Number(NUM_BOIDS) : 128,
-    DISABLE_DRAW_OBJECTS: DISABLE_DRAW_OBJECTS === "1",
-    DRAW_LINES_TO_NEIGHBORS: DRAW_LINES_TO_NEIGHBORS === "1",
+    DISABLE_DRAW_OBJECTS: DISABLE_DRAW_OBJECTS !== "0",
+    DRAW_LINES_TO_NEIGHBORS: DRAW_LINES_TO_NEIGHBORS !== "0",
   }
 }
 function normalizeAngle(ang) {
@@ -339,10 +343,10 @@ var ITEMS = [];
 const WIDTH = 512;
 const HEIGHT = WIDTH;
 var QUAD_TREE_DEPTH = 4;
-const BOID_SENSE_RANGE = 64;
+var BOID_SENSE_RANGE = 64;
 const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 1;
-const BOID_SPACING_MINIMUM = 16;
+var BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
 
 var frameTimePrev = 0;
@@ -357,7 +361,8 @@ function setup() {
   NUM_BOIDS = params.NUM_BOIDS
   DISABLE_DRAW_OBJECTS = params.DISABLE_DRAW_OBJECTS
   DRAW_LINES_TO_NEIGHBORS = params.DRAW_LINES_TO_NEIGHBORS
-
+  BOID_SPACING_MINIMUM = params.BOID_SPACING_MINIMUM
+  BOID_SENSE_RANGE = params.BOID_SENSE_RANGE
 
   CANVAS = createCanvas(params.width, params.height);
 
@@ -440,8 +445,6 @@ function draw() {
       if (neighborsSameSpecies.length > 0) {
         var sumX = 0;
         var sumY = 0;
-        var sumSinDirection = 0;
-        var sumCosDirection = 0;
         var sumDirectionDiff = 0;
         for (const n of neighborsSameSpecies) {
           if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
@@ -452,8 +455,6 @@ function draw() {
 
           sumX += n.position.x;
           sumY += n.position.y;
-          sumSinDirection += sin(n.direction);
-          sumCosDirection += cos(n.direction);
           const angBetween = minimumAngleBetween(item.direction, n.direction);
           sumDirectionDiff += angBetween;
         }
