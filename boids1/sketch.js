@@ -139,7 +139,8 @@ function testQuadTreeUpsert() {
   }
 }
 class QuadTreeNode {
-  constructor(sideLength, x, y, items, depth) {
+  constructor(parent, sideLength, x, y, items, depth) {
+    this.parent = parent;
     this.sideLength = sideLength;
     this.x = x;
     this.y = y;
@@ -149,18 +150,66 @@ class QuadTreeNode {
     // 0,1 1,1
     this.childNodes = {
       0b00: null,
-      0b10: null,
       0b01: null,
+      0b10: null,
       0b11: null,
     };
   }
   containsPoint(x, y) {
     return (
-      this.x <= x &&
-      this.x + this.sideLength < x &&
-      this.y <= y &&
-      this.y + this.sideLength < y
+      this.x <= x && x < this.x + this.sideLength &&
+      this.y <= y && y < this.y + this.sideLength
     );
+  }
+
+  childContains(bits, x, y) {
+    const xOffset = bits >> 1
+    const yOffset = bits & 1
+    const sideLengthNew = this.sideLength / 2
+    const xNew = this.x + xOffset * sideLengthNew
+    const yNew = this.y + yOffset * sideLengthNew
+    return xNew <= x && x < xNew + sideLengthNew && yNew <= y && y < yNew + sideLengthNew
+  }
+  createChild(bits) {
+    const xOffset = bits >> 1
+    const yOffset = bits & 1
+
+    const sideLengthNew = this.sideLength / 2
+    const xNew = this.x + xOffset * sideLengthNew
+    const yNew = this.y + yOffset * sideLengthNew
+
+    const newNode = new QuadTreeNode(this, this.sideLength / 2, xNew, yNew, [], this.depth + 1)
+    return newNode
+  }
+
+  insert(item, x, y, maxDepth) {
+    if (!this.containsPoint(x, y)) {
+      if (this.parent === null) {
+        console.error('no parent and does not contain point')
+      }
+      return this.parent.insert(item, x, y, maxDepth)
+    }
+
+    if (this.depth === maxDepth) {
+      this.items.push(item)
+      return this
+    }
+    else {
+      for (const addressBits in this.childNodes) {
+        if (this.childContains(addressBits, x, y)) {
+          const c = this.childNodes[addressBits]
+          if (c === null) {
+            const newNode = this.createChild(addressBits);
+            this.childNodes[addressBits] = newNode;
+            return newNode.insert(item, x, y, maxDepth);
+
+          }
+          return c.insert(item, x, y, maxDepth);
+
+        }
+      }
+    }
+
   }
 }
 
