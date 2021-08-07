@@ -97,7 +97,9 @@ function squareIntersectsWithSquare(x1, y1, height1, x2, y2, height2) {
 }
 
 function pointInsideCircle(x, y, cx, cy, cr) {
-  return Math.pow(cx - x, 2) + Math.pow(cy - y, 2) <= Math.pow(cr, 2);
+  const a = cx - x
+  const b = cy - y
+  return a * a + b * b <= cr * cr;
 }
 function testQuadTreeNode() {
   console.debug('testQuadTreeNode')
@@ -240,7 +242,7 @@ class QuadTreeNode {
 
   }
   getWithinRadius(x, y, r) {
-    if (!squareIntersectsWithSquare(this.x, this.y, this.sideLength, x - r, y - r, r * 2)) {
+    if (!squareIntersectsWithSquare(this.x, this.y, this.sideLength, x - r, y - r, r)) {
       if (this.parent !== null) {
 
         return this.parent.getWithinRadius(x, y, r)
@@ -260,7 +262,7 @@ class QuadTreeNode {
     for (const addressBits in this.childNodes) {
       const n = this.childNodes[addressBits]
       if (n !== null) {
-        if (squareIntersectsWithSquare(n.x, n.y, n.sideLength, x - r, y - r, r * 2)) {
+        if (squareIntersectsWithSquare(n.x, n.y, n.sideLength, x - r, y - r, r)) {
 
           resultChild = resultChild.concat(n.getWithinRadius(x, y, r))
         }
