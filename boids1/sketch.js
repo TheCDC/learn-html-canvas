@@ -366,7 +366,7 @@ var QUAD_TREE_DEPTH = 4;
 var BOID_SENSE_RANGE = 64;
 var BOID_RANDOM_TURNS = false;
 const BOID_TURN_RATE = 0.2;
-const BOID_SPEED = 3;
+const BOID_SPEED = 1;
 var BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
 
@@ -401,7 +401,7 @@ function setup() {
 }
 
 function draw() {
-  frameRate(60);
+  frameRate(15);
   background(0, 0, 0, 1);
   angleMode(RADIANS);
 
@@ -476,36 +476,46 @@ function draw() {
       }
       const neighborInfo = neighborsSameSpecies.reduce(
         (accumulator, neighbor) => {
+          const angleDiffBetween = minimumAngleBetween(
+            item.direction,
+            neighbor.direction
+          );
+
           return {
             ...accumulator,
-            sumDiffDirection:
-              accumulator.sumDiffDirection +
-              minimumAngleBetween(item.direction, neighbor.direction),
-            sumNeighborX:
-              accumulator.sumNeighborX + neighbor.position.x * neighbor.weight,
-            sumNeighborY:
-              accumulator.sumNeighborY + neighbor.position.y * neighbor.weight,
+            sumDiffDirection: accumulator.sumDiffDirection + angleDiffBetween,
+            sumWeightedDiffDirection:
+              accumulator.sumDiffDirection + angleDiffBetween,
+            sumWeightedNeighborX:
+              accumulator.sumWeightedNeighborX +
+              neighbor.position.x * neighbor.weight,
+            sumWeightedNeighborY:
+              accumulator.sumWeightedNeighborY +
+              neighbor.position.y * neighbor.weight,
             sumNeighborWeight: accumulator.sumNeighborWeight + neighbor.weight,
           };
         },
         {
           sumDiffDirection: 0,
+          sumWeightedDiffDirection: 0,
           sumWeight: 0,
-          sumNeighborX: 0,
-          sumNeighborY: 0,
+          sumWeightedNeighborX: 0,
+          sumWeightedNeighborY: 0,
           sumNeighborWeight: 0,
         }
       );
 
       const geoCenter = {
         x:
-          neighborsSameSpecies.length > 0
-            ? neighborInfo.sumNeighborX / neighborInfo.sumNeighborWeight
-            : item.position.x,
+          neighborsSameSpecies.length === 0
+            ? item.position.x
+            : neighborInfo.sumWeightedNeighborX /
+              neighborInfo.sumNeighborWeight,
         y:
-          neighborsSameSpecies.length > 0
-            ? neighborInfo.sumNeighborY / neighborInfo.sumNeighborWeight
-            : item.position.y,
+          neighborsSameSpecies.length === 0
+            ? item.position.y
+            : neighborInfo.sumWeightedNeighborY /
+              neighborInfo.sumNeighborWeight,
       };
 
       const angleDiffOfAlignment =
@@ -513,11 +523,15 @@ function draw() {
           ? 0
           : neighborInfo.sumDiffDirection / neighborsSameSpecies.length;
       const angleDiffOfCohesion =
-        // neighborsSameSpecies.length < 2 ? 0 :
-        minimumAngleBetween(
-          item.direction,
-          atan2(geoCenter.y - item.position.y, geoCenter.x - item.position.x)
-        );
+        neighborsSameSpecies.length === 0
+          ? 0
+          : minimumAngleBetween(
+              item.direction,
+              atan2(
+                geoCenter.y - item.position.y,
+                geoCenter.x - item.position.x
+              )
+            );
       const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
       // const alignmentSpeedMultiplier = 1;
       // turn to get away from nearest boid
@@ -543,7 +557,7 @@ function draw() {
       // is this boid escaping or aligning?
       const angleDiffToTarget = proximityAlarm
         ? angleEscape
-        : angleDiffOfAlignment * 0.5 + angleDiffOfCohesion * 0.5;
+        : angleDiffOfAlignment * 0 + angleDiffOfCohesion * 0.5;
       const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
       const turnAllowance = myTurnRate; //* (1 - Math.abs(angleDiffOfAlignment) / PI);
@@ -594,12 +608,25 @@ function draw() {
       if (DRAW_ALIGNMENT_ANGLE) {
         fill(120, 100, 100);
         stroke(120, 100, 100);
-        const x =
-          item.position.x + 16 * cos(angleDiffOfAlignment + item.direction);
-        const y =
-          item.position.y + 16 * sin(angleDiffOfAlignment + item.direction);
-        line(item.position.x, item.position.y, x, y);
-        circle(x, y, 4);
+        const xAlignment =
+          item.position.x +
+          radiusItem * cos(angleDiffOfAlignment + item.direction);
+        const yAlignment =
+          item.position.y +
+          radiusItem * sin(angleDiffOfAlignment + item.direction);
+        line(item.position.x, item.position.y, xAlignment, yAlignment);
+        circle(xAlignment, yAlignment, 4);
+
+        fill(180, 100, 100);
+        stroke(180, 100, 100);
+        const xCohesion =
+          item.position.x +
+          radiusItem * cos(angleDiffOfCohesion + item.direction);
+        const yCohesion =
+          item.position.y +
+          radiusItem * sin(angleDiffOfCohesion + item.direction);
+        line(item.position.x, item.position.y, xCohesion, yCohesion);
+        circle(xCohesion, yCohesion, 4);
       }
       if (
         !DISABLE_DRAW_OBJECTS &&
@@ -618,6 +645,7 @@ function draw() {
       }
       if (DRAW_GEO_CENTER) {
         // draw line to the point this boid is escaping
+        fill(80, 0, 100);
         stroke(80, 0, 100);
         line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
         circle(geoCenter.x, geoCenter.y, 4);
