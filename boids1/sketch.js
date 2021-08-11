@@ -306,7 +306,7 @@ class Boid {
   constructor(id, canvas) {
     this.id = id;
     this.canvas = canvas;
-    this.weight = Math.pow(random(1), 4) * 15
+    this.weight = 1 + Math.pow(random(1), 4) * 30
     this.species = random([1,]);
     this.position = {
       x: random(canvas.width),
@@ -485,15 +485,16 @@ function draw() {
         );
         sumDirectionDiff += angBetween;
       }
+      const sumNeighborWeight = neighborsSameSpecies.reduce((a, b) => a + b.weight, 0)
 
       const geoCenter = {
         x:
           neighborsSameSpecies.length > 0
-            ? sumNeighborX / neighborsSameSpecies.length
+            ? sumNeighborX / sumNeighborWeight
             : item.position.x,
         y:
           neighborsSameSpecies.length > 0
-            ? sumNeighborY / neighborsSameSpecies.length
+            ? sumNeighborY / sumNeighborWeight
             : item.position.y,
       };
 
@@ -544,12 +545,45 @@ function draw() {
       const myOldAngleThisFrame = item.direction;
       const myNewAngleThisFrame =
         item.direction +
-        (Math.abs(angleDiffToTarget) < turnAllowance
+        ((Math.abs(angleDiffToTarget) < turnAllowance
           ? signAngleDiffToTarget * angleDiffToTarget
-          : signAngleDiffToTarget * turnAllowance);
+          : signAngleDiffToTarget * turnAllowance)) / item.weight;
 
 
       item.direction = myNewAngleThisFrame;
+
+      // random turns
+      // if (BOID_RANDOM_TURNS && random() < 0.001) {
+      //   item.direction = random() * TWO_PI;
+      // }
+
+      const cosOfMyDir = cos(item.direction);
+      const sinOfMyDir = sin(item.direction);
+
+      const mySpeedThisFrame =
+        BOID_SPEED * 0.5 * (1 + alignmentSpeedMultiplier);
+      item.position.x += mySpeedThisFrame * cosOfMyDir;
+      item.position.y += mySpeedThisFrame * sinOfMyDir;
+      // ==== BEGIN normalize boid vars
+      // == position
+      if (item.position.x < 0) {
+        item.position.x = WIDTH + item.position.x;
+      }
+      if (item.position.y < 0) {
+        item.position.y = HEIGHT + item.position.y;
+      }
+
+      item.position.x = item.position.x % WIDTH;
+      item.position.y = item.position.y % HEIGHT;
+      // == angle
+      if (item.direction < 0) {
+        item.direction = TWO_PI + item.direction;
+      }
+      if (item.direction > TWO_PI) {
+        item.direction = item.direction % TWO_PI;
+      }
+      // ==== END normalize boid vars
+      const radiusItem = 8 * Math.pow(item.weight, 0.5);
 
       if (DRAW_ALIGNMENT_ANGLE) {
         fill(120, 100, 100);
@@ -582,48 +616,16 @@ function draw() {
         line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
         circle(geoCenter.x, geoCenter.y, 4);
       }
-      // random turns
-      // if (BOID_RANDOM_TURNS && random() < 0.001) {
-      //   item.direction = random() * TWO_PI;
-      // }
-
-      const cosOfMyDir = cos(item.direction);
-      const sinOfMyDir = sin(item.direction);
-
-      const mySpeedThisFrame =
-        BOID_SPEED * 0.5 * (1 + alignmentSpeedMultiplier);
-      item.position.x += mySpeedThisFrame * cosOfMyDir;
-      item.position.y += mySpeedThisFrame * sinOfMyDir;
-      // ==== BEGIN normalize boid vars
-      // == position
-      if (item.position.x < 0) {
-        item.position.x = WIDTH + item.position.x;
-      }
-      if (item.position.y < 0) {
-        item.position.y = HEIGHT + item.position.y;
-      }
-
-      item.position.x = item.position.x % WIDTH;
-      item.position.y = item.position.y % HEIGHT;
-      // == angle
-      if (item.direction < 0) {
-        item.direction = TWO_PI + item.direction;
-      }
-      if (item.direction > TWO_PI) {
-        item.direction = item.direction % TWO_PI;
-      }
-      // ==== END normalize boid vars
       if (!DISABLE_DRAW_OBJECTS) {
         fill(item.color);
         stroke(0, 0, 0);
-        circle(item.position.x, item.position.y, 8 * Math.pow(item.weight, 0.5));
-        const headingArrowLength = 16;
+        circle(item.position.x, item.position.y, radiusItem);
         stroke(item.color);
         line(
           item.position.x,
           item.position.y,
-          item.position.x + headingArrowLength * cosOfMyDir,
-          item.position.y + headingArrowLength * sinOfMyDir
+          item.position.x + (radiusItem) * cosOfMyDir,
+          item.position.y + (radiusItem) * sinOfMyDir
         );
       }
       if (!DISABLE_DRAW_OBJECTS && DRAW_SENSE_RANGE) {
