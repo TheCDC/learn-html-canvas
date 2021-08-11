@@ -303,11 +303,11 @@ class Game {
 }
 
 class Boid {
-  constructor(id, canvas, isLeader) {
+  constructor(id, canvas) {
     this.id = id;
     this.canvas = canvas;
-    this.isLeader = isLeader;
-    this.species = random([1, 2, 3, 4]);
+    this.weight = Math.pow(random(1), 4) * 15
+    this.species = random([1,]);
     this.position = {
       x: random(canvas.width),
       y: random(canvas.height),
@@ -356,16 +356,17 @@ var DRAW_SENSE_RANGE = false;
 var DRAW_LINES_TO_NEIGHBORS = true;
 var QUAD_TREE_DRAW_GRID = true;
 var BOID_DRAW_PROXIMITY_ALARM = false;
+var BOID_DRAW_LEADER = true;
 var TREE;
 var CANVAS;
 var ITEMS = [];
-const WIDTH = 512;
-const HEIGHT = WIDTH;
+var WIDTH = 512;
+var HEIGHT = WIDTH;
 var QUAD_TREE_DEPTH = 4;
 var BOID_SENSE_RANGE = 64;
 var BOID_RANDOM_TURNS = false;
-const BOID_TURN_RATE = 0.1;
-const BOID_SPEED = 1;
+const BOID_TURN_RATE = 0.2;
+const BOID_SPEED = 3;
 var BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
 
@@ -383,11 +384,12 @@ function setup() {
   DRAW_LINES_TO_NEIGHBORS = params.DRAW_LINES_TO_NEIGHBORS;
   BOID_SPACING_MINIMUM = params.BOID_SPACING_MINIMUM;
   BOID_SENSE_RANGE = params.BOID_SENSE_RANGE;
-
+  WIDTH = params.width
+  HEIGHT = params.width
   CANVAS = createCanvas(params.width, params.height);
 
   for (var ii = 0; ii < NUM_BOIDS; ii++) {
-    const b = new Boid(ii, CANVAS);
+    const b = new Boid(ii, CANVAS, random() < 0.05);
     ITEMS.push(b);
   }
 
@@ -475,8 +477,8 @@ function draw() {
           );
         }
 
-        sumNeighborX += neighbor.position.x;
-        sumNeighborY += neighbor.position.y;
+        sumNeighborX += neighbor.position.x * neighbor.weight;
+        sumNeighborY += neighbor.position.y * neighbor.weight;
         const angBetween = minimumAngleBetween(
           item.direction,
           neighbor.direction
@@ -500,15 +502,14 @@ function draw() {
           ? sumDirectionDiff / neighborsSameSpecies.length
           : 0;
       const angleDiffOfCohesion =
-        neighborsSameSpecies.length > 1
-          ? minimumAngleBetween(
+        neighborsSameSpecies.length === 0 ? 0 :
+          minimumAngleBetween(
             item.direction,
             atan2(
               geoCenter.y - item.position.y,
               geoCenter.x - item.position.x
             )
           )
-          : 0;
       const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
       // const alignmentSpeedMultiplier = 1;
       // turn to get away from nearest boid
@@ -546,6 +547,8 @@ function draw() {
         (Math.abs(angleDiffToTarget) < turnAllowance
           ? signAngleDiffToTarget * angleDiffToTarget
           : signAngleDiffToTarget * turnAllowance);
+
+
       item.direction = myNewAngleThisFrame;
 
       if (DRAW_ALIGNMENT_ANGLE) {
@@ -580,9 +583,9 @@ function draw() {
         circle(geoCenter.x, geoCenter.y, 4);
       }
       // random turns
-      if (BOID_RANDOM_TURNS && random() < 0.001) {
-        item.direction = random() * TWO_PI;
-      }
+      // if (BOID_RANDOM_TURNS && random() < 0.001) {
+      //   item.direction = random() * TWO_PI;
+      // }
 
       const cosOfMyDir = cos(item.direction);
       const sinOfMyDir = sin(item.direction);
@@ -610,6 +613,19 @@ function draw() {
         item.direction = item.direction % TWO_PI;
       }
       // ==== END normalize boid vars
+      if (!DISABLE_DRAW_OBJECTS) {
+        fill(item.color);
+        stroke(0, 0, 0);
+        circle(item.position.x, item.position.y, 8 * Math.pow(item.weight, 0.5));
+        const headingArrowLength = 16;
+        stroke(item.color);
+        line(
+          item.position.x,
+          item.position.y,
+          item.position.x + headingArrowLength * cosOfMyDir,
+          item.position.y + headingArrowLength * sinOfMyDir
+        );
+      }
       if (!DISABLE_DRAW_OBJECTS && DRAW_SENSE_RANGE) {
         noFill();
         stroke(
@@ -628,19 +644,7 @@ function draw() {
         );
         circle(item.position.x, item.position.y, BOID_SPACING_MINIMUM * 2);
       }
-      if (!DISABLE_DRAW_OBJECTS) {
-        fill(item.color);
-        stroke(0, 0, 0);
-        circle(item.position.x, item.position.y, 8);
-        const headingArrowLength = 16;
-        stroke(item.color);
-        line(
-          item.position.x,
-          item.position.y,
-          item.position.x + headingArrowLength * cosOfMyDir,
-          item.position.y + headingArrowLength * sinOfMyDir
-        );
-      }
+
     }
 
     for (const child in currentNode.childNodes) {
