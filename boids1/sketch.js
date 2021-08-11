@@ -285,9 +285,10 @@ class Game {
 }
 
 class Boid {
-  constructor(id, canvas) {
+  constructor(id, canvas, isLeader) {
     this.id = id;
     this.canvas = canvas;
+    this.isLeader = isLeader
     this.species = random([1, 2, 3, 4]);
     this.position = {
       x: random(canvas.width),
@@ -333,6 +334,7 @@ function tests() {
 
 }
 var DRAW_GEO_CENTER = false;
+var DRAW_ALIGNMENT_ANGLE = true;
 var DRAW_SENSE_RANGE = false;
 var DRAW_LINES_TO_NEIGHBORS = true;
 var QUAD_TREE_DRAW_GRID = true;
@@ -345,7 +347,7 @@ const HEIGHT = WIDTH;
 var QUAD_TREE_DEPTH = 4;
 var BOID_SENSE_RANGE = 64;
 var BOID_RANDOM_TURNS = false;
-const BOID_TURN_RATE = 0.05;
+const BOID_TURN_RATE = 0.1;
 const BOID_SPEED = 1;
 var BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
@@ -458,8 +460,20 @@ function draw() {
         const angBetween = minimumAngleBetween(item.direction, neighbor.direction);
         sumDirectionDiff += angBetween;
       }
-      const angleDiffOfAlignment = neighborsSameSpecies.length > 0 ? sumDirectionDiff / neighborsSameSpecies.length : 0;
-      const alignmentSpeedMultiplier = (PI - Math.abs(angleDiffOfAlignment)) / PI;
+
+      const geoCenter = {
+        x: neighborsSameSpecies.length > 0 ? sumNeighborX / neighborsSameSpecies.length : item.position.x,
+        y: neighborsSameSpecies.length > 0 ? sumNeighborY / neighborsSameSpecies.length : item.position.y,
+      };
+
+
+      const angleDiffOfAlignment = neighborsSameSpecies.length > 0
+        ? sumDirectionDiff / neighborsSameSpecies.length
+        : 0;
+      const angleDiffOfCohesion = neighborsSameSpecies.length > 1 ?
+        (minimumAngleBetween(item.direction, atan2(geoCenter.y - item.position.y, geoCenter.x - item.position.x)))
+        : 0
+      const alignmentSpeedMultiplier = 1 - (Math.abs(angleDiffOfAlignment) / PI);
       // const alignmentSpeedMultiplier = 1;
       // turn to get away from nearest boid
 
@@ -484,19 +498,25 @@ function draw() {
       // is this boid escaping or aligning?
       const angleDiffToTarget = proximityAlarm
         ? angleEscape
-        : angleDiffOfAlignment;
+        : (angleDiffOfAlignment * 0.5 + angleDiffOfCohesion * 0.5);
       const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
-      const turnAmount = myTurnRate * random(1);
+      const turnAllowance = myTurnRate * (1 - (Math.abs(angleDiffOfAlignment) / PI));
       const signAngleDiffToTarget = Math.sign(angleDiffToTarget);
       const myOldAngleThisFrame = item.direction
-      const myNewAngleThisFrame = item.direction + (Math.abs(angleDiffToTarget) < turnAmount ? signAngleDiffToTarget * angleDiffToTarget : signAngleDiffToTarget * turnAmount);
+      const myNewAngleThisFrame = item.direction +
+        (Math.abs(angleDiffToTarget) < turnAllowance ? signAngleDiffToTarget * angleDiffToTarget : signAngleDiffToTarget * turnAllowance);
       item.direction = myNewAngleThisFrame;
-      const geoCenter = {
-        x: neighborsSameSpecies.length > 0 ? sumNeighborX / neighborsSameSpecies.length : item.position.x,
-        y: neighborsSameSpecies.length > 0 ? sumNeighborY / neighborsSameSpecies.length : item.position.y,
-      };
 
+      if (DRAW_ALIGNMENT_ANGLE) {
+        fill(120, 100, 100);
+        stroke(120, 100, 100);
+        const x = item.position.x + 16 * cos(angleDiffOfAlignment + item.direction)
+        const y = item.position.y + 16 * sin(angleDiffOfAlignment + item.direction)
+        line(item.position.x, item.position.y, x, y);
+        circle(x, y, 4);
+
+      }
       if (!DISABLE_DRAW_OBJECTS && proximityAlarm && BOID_DRAW_PROXIMITY_ALARM) {
         fill(30, 100, 100);
         stroke(0, 100, 100);
@@ -522,7 +542,7 @@ function draw() {
       const cosOfMyDir = cos(item.direction);
       const sinOfMyDir = sin(item.direction);
 
-      const mySpeedThisFrame = BOID_SPEED * alignmentSpeedMultiplier;
+      const mySpeedThisFrame = BOID_SPEED * 0.5 * (1 + alignmentSpeedMultiplier);
       item.position.x += mySpeedThisFrame * cosOfMyDir;
       item.position.y += mySpeedThisFrame * sinOfMyDir;
       // ==== BEGIN normalize boid vars
