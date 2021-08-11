@@ -6,6 +6,7 @@
   ],
   "settings": {
     "cSpell.words": ["BOIDS", "boid"],
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

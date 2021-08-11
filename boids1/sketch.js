@@ -1,23 +1,25 @@
 function getUrlParams() {
   const urlParams = new URLSearchParams(window.location.search);
-  const height = urlParams.get('height')
-  const width = urlParams.get('width')
-  const QUAD_TREE_DEPTH = urlParams.get('QUAD_TREE_DEPTH')
-  const BOID_SENSE_RANGE = urlParams.get('BOID_SENSE_RANGE')
-  const BOID_SPACING_MINIMUM = urlParams.get('BOID_SPACING_MINIMUM')
-  const NUM_BOIDS = urlParams.get('NUM_BOIDS')
-  const DISABLE_DRAW_OBJECTS = urlParams.get('DISABLE_DRAW_OBJECTS')
-  const DRAW_LINES_TO_NEIGHBORS = urlParams.get('DRAW_LINES_TO_NEIGHBORS')
+  const height = urlParams.get("height");
+  const width = urlParams.get("width");
+  const QUAD_TREE_DEPTH = urlParams.get("QUAD_TREE_DEPTH");
+  const BOID_SENSE_RANGE = urlParams.get("BOID_SENSE_RANGE");
+  const BOID_SPACING_MINIMUM = urlParams.get("BOID_SPACING_MINIMUM");
+  const NUM_BOIDS = urlParams.get("NUM_BOIDS");
+  const DISABLE_DRAW_OBJECTS = urlParams.get("DISABLE_DRAW_OBJECTS");
+  const DRAW_LINES_TO_NEIGHBORS = urlParams.get("DRAW_LINES_TO_NEIGHBORS");
   return {
     height: height ? Number(height) : 512,
     width: width ? Number(width) : 512,
     QUAD_TREE_DEPTH: QUAD_TREE_DEPTH ? Number(QUAD_TREE_DEPTH) : 4,
     BOID_SENSE_RANGE: BOID_SENSE_RANGE ? Number(BOID_SENSE_RANGE) : 64,
-    BOID_SPACING_MINIMUM: BOID_SPACING_MINIMUM ? Number(BOID_SPACING_MINIMUM) : 16,
+    BOID_SPACING_MINIMUM: BOID_SPACING_MINIMUM
+      ? Number(BOID_SPACING_MINIMUM)
+      : 16,
     NUM_BOIDS: NUM_BOIDS ? Number(NUM_BOIDS) : 128,
     DISABLE_DRAW_OBJECTS: DISABLE_DRAW_OBJECTS !== "0",
     DRAW_LINES_TO_NEIGHBORS: DRAW_LINES_TO_NEIGHBORS !== "0",
-  }
+  };
 }
 function normalizeAngle(ang) {
   // => [0,2pi]
@@ -101,35 +103,35 @@ function squareIntersectsWithSquare(x1, y1, height1, x2, y2, height2) {
 }
 
 function pointInsideCircle(x, y, cx, cy, cr) {
-  const a = cx - x
-  const b = cy - y
+  const a = cx - x;
+  const b = cy - y;
   return a * a + b * b <= cr * cr;
 }
 function testQuadTreeNode() {
-  console.debug('testQuadTreeNode')
-  const depth = 2
-  const width = 16
-  const n1 = new QuadTreeNode(null, width, 0, 0, [], 0)
-  const i1 = { position: { x: 0, y: 0 } }
-  const n2 = n1.insert(i1, i1.position.x, i1.position.y, depth)
+  console.debug("testQuadTreeNode");
+  const depth = 2;
+  const width = 16;
+  const n1 = new QuadTreeNode(null, width, 0, 0, [], 0);
+  const i1 = { position: { x: 0, y: 0 } };
+  const n2 = n1.insert(i1, i1.position.x, i1.position.y, depth);
   if (n2 === null) {
-    console.error(testQuadTreeNode, n1, n2)
+    console.error(testQuadTreeNode, n1, n2);
   }
 
-  const found1 = n1.getWithinRadius(0, 0, 1)
+  const found1 = n1.getWithinRadius(0, 0, 1);
   if (found1.length !== 1) {
-    console.error('getWithinRadius', found1)
+    console.error("getWithinRadius", found1);
   }
 
-  const i2 = { position: { x: width, y: width } }
-  const n3 = n1.insert(i2, i1.position.x, i1.position.y, depth)
+  const i2 = { position: { x: width, y: width } };
+  const n3 = n1.insert(i2, i1.position.x, i1.position.y, depth);
   if (n3 === null) {
-    console.error(testQuadTreeNode, n1, n2)
+    console.error(testQuadTreeNode, n1, n2);
   }
 
-  const found2 = n1.getWithinRadius(width, width, 1)
+  const found2 = n1.getWithinRadius(width, width, 1);
   if (found2.length !== 1) {
-    console.error('getWithinRadius', found2)
+    console.error("getWithinRadius", found2);
   }
 }
 function testQuadTreeDelete() {
@@ -165,7 +167,7 @@ function testQuadTreeUpsert() {
     for (var item of items) {
       item.x = random(sideLength);
       item.y = random(sideLength);
-      t.upsert(item, item.position.x, item.position.y)
+      t.upsert(item, item.position.x, item.position.y);
     }
     for (i of items) {
       t.deleteItem(i, i.position.x, i.position.y);
@@ -191,92 +193,108 @@ class QuadTreeNode {
   }
   containsPoint(x, y) {
     return (
-      this.x <= x && x < this.x + this.sideLength &&
-      this.y <= y && y < this.y + this.sideLength
+      this.x <= x &&
+      x < this.x + this.sideLength &&
+      this.y <= y &&
+      y < this.y + this.sideLength
     );
   }
 
   childContains(bits, x, y) {
-    const xOffset = bits >> 1
-    const yOffset = bits & 1
-    const sideLengthNew = this.sideLength / 2
-    const xNew = this.x + xOffset * sideLengthNew
-    const yNew = this.y + yOffset * sideLengthNew
-    return xNew <= x && x < xNew + sideLengthNew && yNew <= y && y < yNew + sideLengthNew
+    const xOffset = bits >> 1;
+    const yOffset = bits & 1;
+    const sideLengthNew = this.sideLength / 2;
+    const xNew = this.x + xOffset * sideLengthNew;
+    const yNew = this.y + yOffset * sideLengthNew;
+    return (
+      xNew <= x &&
+      x < xNew + sideLengthNew &&
+      yNew <= y &&
+      y < yNew + sideLengthNew
+    );
   }
   createChild(bits) {
-    const xOffset = bits >> 1
-    const yOffset = bits & 1
+    const xOffset = bits >> 1;
+    const yOffset = bits & 1;
 
-    const sideLengthNew = this.sideLength / 2
-    const xNew = this.x + xOffset * sideLengthNew
-    const yNew = this.y + yOffset * sideLengthNew
+    const sideLengthNew = this.sideLength / 2;
+    const xNew = this.x + xOffset * sideLengthNew;
+    const yNew = this.y + yOffset * sideLengthNew;
 
-    const newNode = new QuadTreeNode(this, this.sideLength / 2, xNew, yNew, [], this.depth + 1)
-    return newNode
+    const newNode = new QuadTreeNode(
+      this,
+      this.sideLength / 2,
+      xNew,
+      yNew,
+      [],
+      this.depth + 1
+    );
+    return newNode;
   }
 
   insert(item, x, y, maxDepth) {
     if (!this.containsPoint(x, y)) {
       if (this.parent === null) {
-        console.error('no parent and does not contain point')
+        console.error("no parent and does not contain point");
       }
-      return this.parent.insert(item, x, y, maxDepth)
+      return this.parent.insert(item, x, y, maxDepth);
     }
 
     if (this.depth === maxDepth) {
-      this.items.push(item)
-      return this
-    }
-    else {
+      this.items.push(item);
+      return this;
+    } else {
       for (const addressBits in this.childNodes) {
         if (this.childContains(addressBits, x, y)) {
-          const c = this.childNodes[addressBits]
+          const c = this.childNodes[addressBits];
           if (c === null) {
             const newNode = this.createChild(addressBits);
             this.childNodes[addressBits] = newNode;
             return newNode.insert(item, x, y, maxDepth);
-
           }
           return c.insert(item, x, y, maxDepth);
-
         }
       }
     }
-
   }
   getWithinRadius(x, y, r) {
-    if (!squareIntersectsWithSquare(this.x, this.y, this.sideLength, x - r, y - r, r)) {
+    if (
+      !squareIntersectsWithSquare(
+        this.x,
+        this.y,
+        this.sideLength,
+        x - r,
+        y - r,
+        r
+      )
+    ) {
       if (this.parent !== null) {
-
-        return this.parent.getWithinRadius(x, y, r)
+        return this.parent.getWithinRadius(x, y, r);
       }
-      return []
+      return [];
     }
     const resultMine = [];
     if (this.items.length > 0) {
       for (const item of this.items) {
         if (pointInsideCircle(item.position.x, item.position.y, x, y, r)) {
-          resultMine.push(item)
+          resultMine.push(item);
         }
       }
-
     }
-    let resultChild = []
+    let resultChild = [];
     for (const addressBits in this.childNodes) {
-      const n = this.childNodes[addressBits]
+      const n = this.childNodes[addressBits];
       if (n !== null) {
-        if (squareIntersectsWithSquare(n.x, n.y, n.sideLength, x - r, y - r, r)) {
-
-          resultChild = resultChild.concat(n.getWithinRadius(x, y, r))
+        if (
+          squareIntersectsWithSquare(n.x, n.y, n.sideLength, x - r, y - r, r)
+        ) {
+          resultChild = resultChild.concat(n.getWithinRadius(x, y, r));
         }
-
       }
     }
-    return resultMine.concat(resultChild)
+    return resultMine.concat(resultChild);
   }
 }
-
 
 class Game {
   constructor(canvas) {
@@ -288,7 +306,7 @@ class Boid {
   constructor(id, canvas, isLeader) {
     this.id = id;
     this.canvas = canvas;
-    this.isLeader = isLeader
+    this.isLeader = isLeader;
     this.species = random([1, 2, 3, 4]);
     this.position = {
       x: random(canvas.width),
@@ -331,7 +349,6 @@ function tests() {
   testQuadTreeNode();
   // testQuadTreeDelete();
   // testQuadTreeUpsert();
-
 }
 var DRAW_GEO_CENTER = false;
 var DRAW_ALIGNMENT_ANGLE = true;
@@ -360,12 +377,12 @@ var DISABLE_DRAW_OBJECTS = false;
 function setup() {
   tests();
   const params = getUrlParams();
-  QUAD_TREE_DEPTH = params.QUAD_TREE_DEPTH
-  NUM_BOIDS = params.NUM_BOIDS
-  DISABLE_DRAW_OBJECTS = params.DISABLE_DRAW_OBJECTS
-  DRAW_LINES_TO_NEIGHBORS = params.DRAW_LINES_TO_NEIGHBORS
-  BOID_SPACING_MINIMUM = params.BOID_SPACING_MINIMUM
-  BOID_SENSE_RANGE = params.BOID_SENSE_RANGE
+  QUAD_TREE_DEPTH = params.QUAD_TREE_DEPTH;
+  NUM_BOIDS = params.NUM_BOIDS;
+  DISABLE_DRAW_OBJECTS = params.DISABLE_DRAW_OBJECTS;
+  DRAW_LINES_TO_NEIGHBORS = params.DRAW_LINES_TO_NEIGHBORS;
+  BOID_SPACING_MINIMUM = params.BOID_SPACING_MINIMUM;
+  BOID_SENSE_RANGE = params.BOID_SENSE_RANGE;
 
   CANVAS = createCanvas(params.width, params.height);
 
@@ -379,8 +396,6 @@ function setup() {
     const b = createButton(o.text);
     b.mousePressed(o.action);
   }
-
-
 }
 
 function draw() {
@@ -452,28 +467,49 @@ function draw() {
         if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
           stroke(item.color);
 
-          line(item.position.x, item.position.y, neighbor.position.x, neighbor.position.y);
+          line(
+            item.position.x,
+            item.position.y,
+            neighbor.position.x,
+            neighbor.position.y
+          );
         }
 
         sumNeighborX += neighbor.position.x;
         sumNeighborY += neighbor.position.y;
-        const angBetween = minimumAngleBetween(item.direction, neighbor.direction);
+        const angBetween = minimumAngleBetween(
+          item.direction,
+          neighbor.direction
+        );
         sumDirectionDiff += angBetween;
       }
 
       const geoCenter = {
-        x: neighborsSameSpecies.length > 0 ? sumNeighborX / neighborsSameSpecies.length : item.position.x,
-        y: neighborsSameSpecies.length > 0 ? sumNeighborY / neighborsSameSpecies.length : item.position.y,
+        x:
+          neighborsSameSpecies.length > 0
+            ? sumNeighborX / neighborsSameSpecies.length
+            : item.position.x,
+        y:
+          neighborsSameSpecies.length > 0
+            ? sumNeighborY / neighborsSameSpecies.length
+            : item.position.y,
       };
 
-
-      const angleDiffOfAlignment = neighborsSameSpecies.length > 0
-        ? sumDirectionDiff / neighborsSameSpecies.length
-        : 0;
-      const angleDiffOfCohesion = neighborsSameSpecies.length > 1 ?
-        (minimumAngleBetween(item.direction, atan2(geoCenter.y - item.position.y, geoCenter.x - item.position.x)))
-        : 0
-      const alignmentSpeedMultiplier = 1 - (Math.abs(angleDiffOfAlignment) / PI);
+      const angleDiffOfAlignment =
+        neighborsSameSpecies.length > 0
+          ? sumDirectionDiff / neighborsSameSpecies.length
+          : 0;
+      const angleDiffOfCohesion =
+        neighborsSameSpecies.length > 1
+          ? minimumAngleBetween(
+            item.direction,
+            atan2(
+              geoCenter.y - item.position.y,
+              geoCenter.x - item.position.x
+            )
+          )
+          : 0;
+      const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
       // const alignmentSpeedMultiplier = 1;
       // turn to get away from nearest boid
 
@@ -498,26 +534,35 @@ function draw() {
       // is this boid escaping or aligning?
       const angleDiffToTarget = proximityAlarm
         ? angleEscape
-        : (angleDiffOfAlignment * 0.5 + angleDiffOfCohesion * 0.5);
+        : angleDiffOfAlignment * 0.5 + angleDiffOfCohesion * 0.5;
       const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
-      const turnAllowance = myTurnRate * (1 - (Math.abs(angleDiffOfAlignment) / PI));
+      const turnAllowance =
+        myTurnRate * (1 - Math.abs(angleDiffOfAlignment) / PI);
       const signAngleDiffToTarget = Math.sign(angleDiffToTarget);
-      const myOldAngleThisFrame = item.direction
-      const myNewAngleThisFrame = item.direction +
-        (Math.abs(angleDiffToTarget) < turnAllowance ? signAngleDiffToTarget * angleDiffToTarget : signAngleDiffToTarget * turnAllowance);
+      const myOldAngleThisFrame = item.direction;
+      const myNewAngleThisFrame =
+        item.direction +
+        (Math.abs(angleDiffToTarget) < turnAllowance
+          ? signAngleDiffToTarget * angleDiffToTarget
+          : signAngleDiffToTarget * turnAllowance);
       item.direction = myNewAngleThisFrame;
 
       if (DRAW_ALIGNMENT_ANGLE) {
         fill(120, 100, 100);
         stroke(120, 100, 100);
-        const x = item.position.x + 16 * cos(angleDiffOfAlignment + item.direction)
-        const y = item.position.y + 16 * sin(angleDiffOfAlignment + item.direction)
+        const x =
+          item.position.x + 16 * cos(angleDiffOfAlignment + item.direction);
+        const y =
+          item.position.y + 16 * sin(angleDiffOfAlignment + item.direction);
         line(item.position.x, item.position.y, x, y);
         circle(x, y, 4);
-
       }
-      if (!DISABLE_DRAW_OBJECTS && proximityAlarm && BOID_DRAW_PROXIMITY_ALARM) {
+      if (
+        !DISABLE_DRAW_OBJECTS &&
+        proximityAlarm &&
+        BOID_DRAW_PROXIMITY_ALARM
+      ) {
         fill(30, 100, 100);
         stroke(0, 100, 100);
         line(
@@ -542,7 +587,8 @@ function draw() {
       const cosOfMyDir = cos(item.direction);
       const sinOfMyDir = sin(item.direction);
 
-      const mySpeedThisFrame = BOID_SPEED * 0.5 * (1 + alignmentSpeedMultiplier);
+      const mySpeedThisFrame =
+        BOID_SPEED * 0.5 * (1 + alignmentSpeedMultiplier);
       item.position.x += mySpeedThisFrame * cosOfMyDir;
       item.position.y += mySpeedThisFrame * sinOfMyDir;
       // ==== BEGIN normalize boid vars
@@ -583,7 +629,6 @@ function draw() {
         circle(item.position.x, item.position.y, BOID_SPACING_MINIMUM * 2);
       }
       if (!DISABLE_DRAW_OBJECTS) {
-
         fill(item.color);
         stroke(0, 0, 0);
         circle(item.position.x, item.position.y, 8);
@@ -617,7 +662,6 @@ function draw() {
     var neighbors = TREE.getWithinRadius(pos[0], pos[1], BOID_SENSE_RANGE);
     for (const n of neighbors) {
       if (!DISABLE_DRAW_OBJECTS) {
-
         stroke(60, 100, 100);
         // stroke(255)
         line(pos[0], pos[1], n.position.x, n.position.y);
