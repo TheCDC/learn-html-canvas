@@ -306,8 +306,8 @@ class Boid {
   constructor(id, canvas) {
     this.id = id;
     this.canvas = canvas;
-    this.weight = 1 + Math.pow(random(1), 4) * 30
-    this.species = random([1,]);
+    this.weight = 1 + Math.pow(random(1), 4) * 30;
+    this.species = random([1]);
     this.position = {
       x: random(canvas.width),
       y: random(canvas.height),
@@ -384,8 +384,8 @@ function setup() {
   DRAW_LINES_TO_NEIGHBORS = params.DRAW_LINES_TO_NEIGHBORS;
   BOID_SPACING_MINIMUM = params.BOID_SPACING_MINIMUM;
   BOID_SENSE_RANGE = params.BOID_SENSE_RANGE;
-  WIDTH = params.width
-  HEIGHT = params.width
+  WIDTH = params.width;
+  HEIGHT = params.width;
   CANVAS = createCanvas(params.width, params.height);
 
   for (var ii = 0; ii < NUM_BOIDS; ii++) {
@@ -462,11 +462,8 @@ function draw() {
           }
         }
       }
-      var sumNeighborX = 0;
-      var sumNeighborY = 0;
-      var sumDirectionDiff = 0;
-      for (const neighbor of neighborsSameSpecies) {
-        if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
+      if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
+        for (const neighbor of neighborsSameSpecies) {
           stroke(item.color);
 
           line(
@@ -476,41 +473,51 @@ function draw() {
             neighbor.position.y
           );
         }
-
-        sumNeighborX += neighbor.position.x * neighbor.weight;
-        sumNeighborY += neighbor.position.y * neighbor.weight;
-        const angBetween = minimumAngleBetween(
-          item.direction,
-          neighbor.direction
-        );
-        sumDirectionDiff += angBetween;
       }
-      const sumNeighborWeight = neighborsSameSpecies.reduce((a, b) => a + b.weight, 0)
+      const neighborInfo = neighborsSameSpecies.reduce(
+        (accumulator, neighbor) => {
+          return {
+            ...accumulator,
+            sumDiffDirection:
+              accumulator.sumDiffDirection +
+              minimumAngleBetween(item.direction, neighbor.direction),
+            sumNeighborX:
+              accumulator.sumNeighborX + neighbor.position.x * neighbor.weight,
+            sumNeighborY:
+              accumulator.sumNeighborY + neighbor.position.y * neighbor.weight,
+            sumNeighborWeight: accumulator.sumNeighborWeight + neighbor.weight,
+          };
+        },
+        {
+          sumDiffDirection: 0,
+          sumWeight: 0,
+          sumNeighborX: 0,
+          sumNeighborY: 0,
+          sumNeighborWeight: 0,
+        }
+      );
 
       const geoCenter = {
         x:
           neighborsSameSpecies.length > 0
-            ? sumNeighborX / sumNeighborWeight
+            ? neighborInfo.sumNeighborX / neighborInfo.sumNeighborWeight
             : item.position.x,
         y:
           neighborsSameSpecies.length > 0
-            ? sumNeighborY / sumNeighborWeight
+            ? neighborInfo.sumNeighborY / neighborInfo.sumNeighborWeight
             : item.position.y,
       };
 
       const angleDiffOfAlignment =
-        neighborsSameSpecies.length > 0
-          ? sumDirectionDiff / neighborsSameSpecies.length
-          : 0;
+        neighborsSameSpecies.length === 0
+          ? 0
+          : neighborInfo.sumDiffDirection / neighborsSameSpecies.length;
       const angleDiffOfCohesion =
-        neighborsSameSpecies.length === 0 ? 0 :
-          minimumAngleBetween(
-            item.direction,
-            atan2(
-              geoCenter.y - item.position.y,
-              geoCenter.x - item.position.x
-            )
-          )
+        // neighborsSameSpecies.length < 2 ? 0 :
+        minimumAngleBetween(
+          item.direction,
+          atan2(geoCenter.y - item.position.y, geoCenter.x - item.position.x)
+        );
       const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
       // const alignmentSpeedMultiplier = 1;
       // turn to get away from nearest boid
@@ -521,12 +528,12 @@ function draw() {
         distNeighborClosest < BOID_SPACING_MINIMUM;
       const angleEscapeProjectionDifferential = proximityAlarm
         ? minimumAngleBetween(
-          item.direction,
-          atan2(
-            neighborClosest.position.y - item.position.y,
-            neighborClosest.position.x - item.position.x
+            item.direction,
+            atan2(
+              neighborClosest.position.y - item.position.y,
+              neighborClosest.position.x - item.position.x
+            )
           )
-        )
         : item.direction;
       const angleEscapeActualDifferential =
         PI - Math.abs(angleEscapeProjectionDifferential) < 0.1
@@ -539,16 +546,15 @@ function draw() {
         : angleDiffOfAlignment * 0.5 + angleDiffOfCohesion * 0.5;
       const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
-      const turnAllowance =
-        myTurnRate * (1 - Math.abs(angleDiffOfAlignment) / PI);
+      const turnAllowance = myTurnRate; //* (1 - Math.abs(angleDiffOfAlignment) / PI);
       const signAngleDiffToTarget = Math.sign(angleDiffToTarget);
       const myOldAngleThisFrame = item.direction;
       const myNewAngleThisFrame =
         item.direction +
-        ((Math.abs(angleDiffToTarget) < turnAllowance
+        (Math.abs(angleDiffToTarget) < turnAllowance
           ? signAngleDiffToTarget * angleDiffToTarget
-          : signAngleDiffToTarget * turnAllowance)) / item.weight;
-
+          : signAngleDiffToTarget * turnAllowance) /
+          item.weight;
 
       item.direction = myNewAngleThisFrame;
 
@@ -624,8 +630,8 @@ function draw() {
         line(
           item.position.x,
           item.position.y,
-          item.position.x + (radiusItem) * cosOfMyDir,
-          item.position.y + (radiusItem) * sinOfMyDir
+          item.position.x + radiusItem * cosOfMyDir,
+          item.position.y + radiusItem * sinOfMyDir
         );
       }
       if (!DISABLE_DRAW_OBJECTS && DRAW_SENSE_RANGE) {
@@ -646,7 +652,6 @@ function draw() {
         );
         circle(item.position.x, item.position.y, BOID_SPACING_MINIMUM * 2);
       }
-
     }
 
     for (const child in currentNode.childNodes) {
