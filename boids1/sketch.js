@@ -344,7 +344,8 @@ const WIDTH = 512;
 const HEIGHT = WIDTH;
 var QUAD_TREE_DEPTH = 4;
 var BOID_SENSE_RANGE = 64;
-const BOID_TURN_RATE = 0.1;
+var BOID_RANDOM_TURNS = false;
+const BOID_TURN_RATE = 0.05;
 const BOID_SPEED = 1;
 var BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
@@ -442,86 +443,88 @@ function draw() {
           }
         }
       }
-      if (neighborsSameSpecies.length > 0) {
-        var sumX = 0;
-        var sumY = 0;
-        var sumDirectionDiff = 0;
-        for (const n of neighborsSameSpecies) {
-          if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
-            stroke(item.color);
+      var sumNeighborX = 0;
+      var sumNeighborY = 0;
+      var sumDirectionDiff = 0;
+      for (const neighbor of neighborsSameSpecies) {
+        if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
+          stroke(item.color);
 
-            line(item.position.x, item.position.y, n.position.x, n.position.y);
-          }
-
-          sumX += n.position.x;
-          sumY += n.position.y;
-          const angBetween = minimumAngleBetween(item.direction, n.direction);
-          sumDirectionDiff += angBetween;
+          line(item.position.x, item.position.y, neighbor.position.x, neighbor.position.y);
         }
-        // turn to get away from nearest boid
 
-        const proximityAlarm =
-          neighborClosest &&
-          distNeighborClosest &&
-          distNeighborClosest < BOID_SPACING_MINIMUM;
-        const angleEscapeProjectionDifferential = proximityAlarm
-          ? minimumAngleBetween(
-            item.direction,
-            atan2(
-              neighborClosest.position.y - item.position.y,
-              neighborClosest.position.x - item.position.x
-            )
+        sumNeighborX += neighbor.position.x;
+        sumNeighborY += neighbor.position.y;
+        const angBetween = minimumAngleBetween(item.direction, neighbor.direction);
+        sumDirectionDiff += angBetween;
+      }
+      const angleDiffOfAlignment = neighborsSameSpecies.length > 0 ? sumDirectionDiff / neighborsSameSpecies.length : 0;
+      const alignmentSpeedMultiplier = (PI - Math.abs(angleDiffOfAlignment)) / PI;
+      // const alignmentSpeedMultiplier = 1;
+      // turn to get away from nearest boid
+
+      const proximityAlarm =
+        neighborClosest &&
+        distNeighborClosest &&
+        distNeighborClosest < BOID_SPACING_MINIMUM;
+      const angleEscapeProjectionDifferential = proximityAlarm
+        ? minimumAngleBetween(
+          item.direction,
+          atan2(
+            neighborClosest.position.y - item.position.y,
+            neighborClosest.position.x - item.position.x
           )
-          : item.direction;
-        const angleEscapeActualDifferential =
-          PI - Math.abs(angleEscapeProjectionDifferential) < 0.1
-            ? [PI / 2, -PI / 2][item.id % 2]
-            : angleEscapeProjectionDifferential;
-        const angleEscape = proximityAlarm ? angleEscapeActualDifferential : 0;
-        const angleDiffToTarget = proximityAlarm
-          ? angleEscape
-          : sumDirectionDiff / neighborsSameSpecies.length;
-        const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
+        )
+        : item.direction;
+      const angleEscapeActualDifferential =
+        PI - Math.abs(angleEscapeProjectionDifferential) < 0.1
+          ? [PI / 2, -PI / 2][item.id % 2]
+          : angleEscapeProjectionDifferential;
+      const angleEscape = proximityAlarm ? angleEscapeActualDifferential : 0;
+      // is this boid escaping or aligning?
+      const angleDiffToTarget = proximityAlarm
+        ? angleEscape
+        : angleDiffOfAlignment;
+      const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
-        const turnAmount = myTurnRate * random(1);
-        const direction = Math.sign(angleDiffToTarget);
-        item.direction +=
-          Math.abs(angleDiffToTarget) < turnAmount
-            ? direction * angleDiffToTarget
-            : direction * turnAmount;
+      const turnAmount = myTurnRate * random(1);
+      const signAngleDiffToTarget = Math.sign(angleDiffToTarget);
+      const myOldAngleThisFrame = item.direction
+      const myNewAngleThisFrame = item.direction + (Math.abs(angleDiffToTarget) < turnAmount ? signAngleDiffToTarget * angleDiffToTarget : signAngleDiffToTarget * turnAmount);
+      item.direction = myNewAngleThisFrame;
+      const geoCenter = {
+        x: neighborsSameSpecies.length > 0 ? sumNeighborX / neighborsSameSpecies.length : item.position.x,
+        y: neighborsSameSpecies.length > 0 ? sumNeighborY / neighborsSameSpecies.length : item.position.y,
+      };
 
-        const geoCenter = {
-          x: sumX / neighborsSameSpecies.length,
-          y: sumY / neighborsSameSpecies.length,
-        };
-
-        if (!DISABLE_DRAW_OBJECTS && proximityAlarm && BOID_DRAW_PROXIMITY_ALARM) {
-          fill(30, 100, 100);
-          stroke(0, 100, 100);
-          line(
-            item.position.x,
-            item.position.y,
-            item.position.x + 16 * cos(angleEscape + item.direction),
-            item.position.y + 16 * sin(angleEscape + item.direction)
-          );
-          circle(item.position.x - 8, item.position.y, 4);
-        }
-        if (DRAW_GEO_CENTER) {
-          // draw line to the point this boid is escaping
-          stroke(80, 0, 100);
-          line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
-          circle(geoCenter.x, geoCenter.y, 4);
-        }
+      if (!DISABLE_DRAW_OBJECTS && proximityAlarm && BOID_DRAW_PROXIMITY_ALARM) {
+        fill(30, 100, 100);
+        stroke(0, 100, 100);
+        line(
+          item.position.x,
+          item.position.y,
+          item.position.x + 16 * cos(angleEscape + item.direction),
+          item.position.y + 16 * sin(angleEscape + item.direction)
+        );
+        circle(item.position.x - 8, item.position.y, 4);
+      }
+      if (DRAW_GEO_CENTER) {
+        // draw line to the point this boid is escaping
+        stroke(80, 0, 100);
+        line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
+        circle(geoCenter.x, geoCenter.y, 4);
       }
       // random turns
-      if (random() < 0.001) {
+      if (BOID_RANDOM_TURNS && random() < 0.001) {
         item.direction = random() * TWO_PI;
       }
 
-      const cosDir = cos(item.direction);
-      const sinDir = sin(item.direction);
-      item.position.x += BOID_SPEED * cosDir;
-      item.position.y += BOID_SPEED * sinDir;
+      const cosOfMyDir = cos(item.direction);
+      const sinOfMyDir = sin(item.direction);
+
+      const mySpeedThisFrame = BOID_SPEED * alignmentSpeedMultiplier;
+      item.position.x += mySpeedThisFrame * cosOfMyDir;
+      item.position.y += mySpeedThisFrame * sinOfMyDir;
       // ==== BEGIN normalize boid vars
       // == position
       if (item.position.x < 0) {
@@ -569,8 +572,8 @@ function draw() {
         line(
           item.position.x,
           item.position.y,
-          item.position.x + headingArrowLength * cosDir,
-          item.position.y + headingArrowLength * sinDir
+          item.position.x + headingArrowLength * cosOfMyDir,
+          item.position.y + headingArrowLength * sinOfMyDir
         );
       }
     }
