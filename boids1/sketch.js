@@ -306,7 +306,7 @@ class Boid {
   constructor(id, canvas) {
     this.id = id;
     this.canvas = canvas;
-    this.weight = 1 + Math.pow(random(1), 4) * 30;
+    this.weight = 1 + Math.pow(random(1), 4) * 15;
     this.species = random([1]);
     this.position = {
       x: random(canvas.width),
@@ -350,7 +350,7 @@ function tests() {
   // testQuadTreeDelete();
   // testQuadTreeUpsert();
 }
-var DRAW_GEO_CENTER = false;
+var DRAW_GEO_CENTER = true;
 var DRAW_ALIGNMENT_ANGLE = true;
 var DRAW_SENSE_RANGE = false;
 var DRAW_LINES_TO_NEIGHBORS = true;
@@ -366,7 +366,7 @@ var QUAD_TREE_DEPTH = 4;
 var BOID_SENSE_RANGE = 64;
 var BOID_RANDOM_TURNS = false;
 const BOID_TURN_RATE = 0.2;
-const BOID_SPEED = 1;
+const BOID_SPEED = 2;
 var BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
 
@@ -401,7 +401,7 @@ function setup() {
 }
 
 function draw() {
-  frameRate(15);
+  frameRate(60);
   background(0, 0, 0, 1);
   angleMode(RADIANS);
 
@@ -522,16 +522,14 @@ function draw() {
         neighborsSameSpecies.length === 0
           ? 0
           : neighborInfo.sumDiffDirection / neighborsSameSpecies.length;
-      const angleDiffOfCohesion =
-        neighborsSameSpecies.length === 0
-          ? 0
-          : minimumAngleBetween(
-              item.direction,
-              atan2(
-                geoCenter.y - item.position.y,
-                geoCenter.x - item.position.x
-              )
-            );
+      const angleToGeoCenter = atan2(
+        geoCenter.y - item.position.y,
+        geoCenter.x - item.position.x
+      );
+      const angleDiffOfCohesion = minimumAngleBetween(
+        item.direction,
+        angleToGeoCenter
+      );
       const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
       // const alignmentSpeedMultiplier = 1;
       // turn to get away from nearest boid
@@ -557,7 +555,7 @@ function draw() {
       // is this boid escaping or aligning?
       const angleDiffToTarget = proximityAlarm
         ? angleEscape
-        : angleDiffOfAlignment * 0 + angleDiffOfCohesion * 0.5;
+        : angleDiffOfAlignment * 0.8 + angleDiffOfCohesion * 0.2;
       const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
       const turnAllowance = myTurnRate; //* (1 - Math.abs(angleDiffOfAlignment) / PI);
@@ -604,7 +602,13 @@ function draw() {
       }
       // ==== END normalize boid vars
       const radiusItem = 8 * Math.pow(item.weight, 0.5);
-
+      if (DRAW_GEO_CENTER) {
+        // draw line to the point this boid is escaping
+        fill(80, 0, 100);
+        stroke(80, 0, 100);
+        line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
+        circle(geoCenter.x, geoCenter.y, 4);
+      }
       if (DRAW_ALIGNMENT_ANGLE) {
         fill(120, 100, 100);
         stroke(120, 100, 100);
@@ -627,6 +631,7 @@ function draw() {
           radiusItem * sin(angleDiffOfCohesion + item.direction);
         line(item.position.x, item.position.y, xCohesion, yCohesion);
         circle(xCohesion, yCohesion, 4);
+        const noop = true;
       }
       if (
         !DISABLE_DRAW_OBJECTS &&
@@ -643,13 +648,7 @@ function draw() {
         );
         circle(item.position.x - 8, item.position.y, 4);
       }
-      if (DRAW_GEO_CENTER) {
-        // draw line to the point this boid is escaping
-        fill(80, 0, 100);
-        stroke(80, 0, 100);
-        line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
-        circle(geoCenter.x, geoCenter.y, 4);
-      }
+
       if (!DISABLE_DRAW_OBJECTS) {
         fill(item.color);
         stroke(0, 0, 0);
