@@ -23,7 +23,7 @@ function getUrlParams() {
 }
 function normalizeAngle(ang) {
   // => [0,2pi]
-  ang = ang % PI;
+  ang = ang % TWO_PI;
   if (ang < 0) {
     ang = TWO_PI + ang;
   }
