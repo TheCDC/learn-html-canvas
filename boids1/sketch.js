@@ -309,6 +309,7 @@ class Boid {
     this.weight = 1 + Math.pow(random(1), 4) * 15;
     this.species = random([1]);
 
+    this.position = createVector(random(canvas.width), random(canvas.height));
     colorMode(HSB);
 
     this.color = color(this.species * 4 * 16, 100, 100, 1);
@@ -363,7 +364,7 @@ var QUAD_TREE_DEPTH = 4;
 var BOID_SENSE_RANGE = 64;
 var BOID_RANDOM_TURNS = false;
 const BOID_TURN_RATE = 0.2;
-const BOID_SPEED = 2;
+const BOID_SPEED = 1;
 var BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
 
@@ -520,11 +521,24 @@ function draw() {
         geoCenter.y - item.position.y,
         geoCenter.x - item.position.x
       );
-      const angleDiffOfCohesion = minimumAngleBetween(
-        item.direction,
-        angleToGeoCenter
+      const angleDiffOfCohesion =
+        neighborsSameSpecies.length === 0
+          ? 0
+          : minimumAngleBetween(item.direction, angleToGeoCenter);
+      const distToGeoCenter = dist(
+        item.position.x,
+        item.position.y,
+        geoCenter.x,
+        geoCenter.y
       );
-      const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
+      // const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
+      const alignmentSpeedMultiplier =
+        distToGeoCenter === 0
+          ? BOID_SPEED
+          : Math.min(
+              BOID_SPEED * 6,
+              BOID_SPEED / (Math.max(1, distToGeoCenter) / BOID_SENSE_RANGE)
+            );
       // const alignmentSpeedMultiplier = 1;
       // turn to get away from nearest boid
 
