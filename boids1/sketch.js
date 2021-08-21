@@ -308,10 +308,7 @@ class Boid {
     this.canvas = canvas;
     this.weight = 1 + Math.pow(random(1), 4) * 15;
     this.species = random([1]);
-    this.position = {
-      x: random(canvas.width),
-      y: random(canvas.height),
-    };
+
     colorMode(HSB);
 
     this.color = color(this.species * 4 * 16, 100, 100, 1);
