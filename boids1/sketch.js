@@ -8,6 +8,7 @@ function getUrlParams() {
   const NUM_BOIDS = urlParams.get("NUM_BOIDS");
   const DISABLE_DRAW_OBJECTS = urlParams.get("DISABLE_DRAW_OBJECTS");
   const DRAW_LINES_TO_NEIGHBORS = urlParams.get("DRAW_LINES_TO_NEIGHBORS");
+  const DRAW_SENSOR_ANGLES = urlParams.get("DRAW_SENSOR_ANGLES");
   return {
     height: height ? Number(height) : 512,
     width: width ? Number(width) : 512,
@@ -19,6 +20,7 @@ function getUrlParams() {
     NUM_BOIDS: NUM_BOIDS ? Number(NUM_BOIDS) : 128,
     DISABLE_DRAW_OBJECTS: DISABLE_DRAW_OBJECTS !== "0",
     DRAW_LINES_TO_NEIGHBORS: DRAW_LINES_TO_NEIGHBORS !== "0",
+    DRAW_SENSOR_ANGLES: DRAW_SENSOR_ANGLES !== "0",
   };
 }
 function normalizeAngle(ang) {
@@ -373,9 +375,11 @@ var frameTimeDebugDrawPrevious = 0;
 var PARAMS;
 var frameTimes = [];
 var DISABLE_DRAW_OBJECTS = false;
-function setup() {
+
+function setup(DRAW_SENSOR_ANGLES) {
   tests();
   const params = getUrlParams();
+  PARAMS = params;
   QUAD_TREE_DEPTH = params.QUAD_TREE_DEPTH;
   NUM_BOIDS = params.NUM_BOIDS;
   DISABLE_DRAW_OBJECTS = params.DISABLE_DRAW_OBJECTS;
@@ -610,49 +614,57 @@ function draw() {
       }
       // ==== END normalize boid vars
       const radiusItem = 8 * Math.pow(item.weight, 0.5);
-      if (DRAW_GEO_CENTER) {
-        // draw line to the point this boid is escaping
-        push();
-        fill(80, 0, 100);
-        stroke(80, 0, 100);
+      if (!DISABLE_DRAW_OBJECTS) {
+        if (PARAMS.DRAW_SENSOR_ANGLES) {
+          {
+            push();
+            translate(item.position.x, item.position.y);
+            rotate(angleDiffToTarget + item.direction);
+            stroke(300, 100, 100);
+            line(0, 0, radiusItem * 2, 0);
+            pop();
+          }
+          if (DRAW_GEO_CENTER) {
+            // draw line to the point this boid is escaping
+            push();
+            fill(80, 0, 100);
+            stroke(80, 0, 100);
 
-        line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
-        circle(geoCenter.x, geoCenter.y, 4);
-        pop();
-      }
-      if (DRAW_ALIGNMENT_ANGLE) {
-        push();
-        translate(item.position.x, item.position.y);
-        rotate(item.direction);
-        rotate(angleDiffOfAlignment);
-        fill(120, 100, 100);
-        stroke(120, 100, 100);
-        line(0, 0, radiusItem, 0);
-        circle(radiusItem, 0, 4);
-        rotate(-angleDiffOfAlignment);
-        // =====
-        rotate(angleDiffOfCohesion);
-        fill(180, 100, 100);
-        stroke(180, 100, 100);
-        line(0, 0, radiusItem, 0);
-        circle(radiusItem, 0, 4);
-        const noop = true;
-        pop();
-      }
-      if (
-        !DISABLE_DRAW_OBJECTS &&
-        proximityAlarm &&
-        BOID_DRAW_PROXIMITY_ALARM
-      ) {
-        push();
-        fill(30, 100, 100);
-        stroke(0, 100, 100);
-        translate(item.position.x, item.position.y);
-        circle(-radiusItem / 2 - 4, 0, 4);
-        rotate(item.direction);
-        rotate(angleEscape);
-        line(0, 0, radiusItem * 2, 0);
-        pop();
+            line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
+            circle(geoCenter.x, geoCenter.y, 4);
+            pop();
+          }
+          if (DRAW_ALIGNMENT_ANGLE) {
+            push();
+            translate(item.position.x, item.position.y);
+            rotate(item.direction);
+            rotate(angleDiffOfAlignment);
+            fill(120, 100, 100);
+            stroke(120, 100, 100);
+            line(0, 0, radiusItem, 0);
+            circle(radiusItem, 0, 4);
+            rotate(-angleDiffOfAlignment);
+            // =====
+            rotate(angleDiffOfCohesion);
+            fill(180, 100, 100);
+            stroke(180, 100, 100);
+            line(0, 0, radiusItem, 0);
+            circle(radiusItem, 0, 4);
+            const noop = true;
+            pop();
+          }
+          if (proximityAlarm && BOID_DRAW_PROXIMITY_ALARM) {
+            push();
+            fill(30, 100, 100);
+            stroke(0, 100, 100);
+            translate(item.position.x, item.position.y);
+            circle(-radiusItem / 2 - 4, 0, 4);
+            rotate(item.direction);
+            rotate(angleEscape);
+            line(0, 0, radiusItem * 2, 0);
+            pop();
+          }
+        }
       }
 
       if (!DISABLE_DRAW_OBJECTS) {
