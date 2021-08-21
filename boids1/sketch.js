@@ -416,15 +416,13 @@ function draw() {
   while (queue.length > 0) {
     var currentNode = queue.pop();
     if (!DISABLE_DRAW_OBJECTS && QUAD_TREE_DRAW_GRID) {
+      push();
       noFill();
       // color(255*currentNode.depth/TREE.maxDepth);
       stroke(120, 100, 100, 0.75);
-      rect(
-        currentNode.x,
-        currentNode.y,
-        currentNode.sideLength,
-        currentNode.sideLength
-      );
+      translate(currentNode.x, currentNode.y);
+      rect(0, 0, currentNode.sideLength, currentNode.sideLength);
+      pop();
     }
     // ====== Draw items
     for (const item of currentNode.items) {
@@ -463,9 +461,8 @@ function draw() {
         }
       }
       if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
+        stroke(item.color);
         for (const neighbor of neighborsSameSpecies) {
-          stroke(item.color);
-
           line(
             item.position.x,
             item.position.y,
@@ -555,7 +552,7 @@ function draw() {
       // is this boid escaping or aligning?
       const angleDiffToTarget = proximityAlarm
         ? angleEscape
-        : angleDiffOfAlignment * 0.8 + angleDiffOfCohesion * 0.2;
+        : angleDiffOfAlignment * 0.5 + angleDiffOfCohesion * 0.5;
       const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
       const turnAllowance = myTurnRate; //* (1 - Math.abs(angleDiffOfAlignment) / PI);
@@ -604,62 +601,59 @@ function draw() {
       const radiusItem = 8 * Math.pow(item.weight, 0.5);
       if (DRAW_GEO_CENTER) {
         // draw line to the point this boid is escaping
+        push();
         fill(80, 0, 100);
         stroke(80, 0, 100);
+
         line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
         circle(geoCenter.x, geoCenter.y, 4);
+        pop();
       }
       if (DRAW_ALIGNMENT_ANGLE) {
+        push();
+        translate(item.position.x, item.position.y);
+        rotate(item.direction);
+        rotate(angleDiffOfAlignment);
         fill(120, 100, 100);
         stroke(120, 100, 100);
-        const xAlignment =
-          item.position.x +
-          radiusItem * cos(angleDiffOfAlignment + item.direction);
-        const yAlignment =
-          item.position.y +
-          radiusItem * sin(angleDiffOfAlignment + item.direction);
-        line(item.position.x, item.position.y, xAlignment, yAlignment);
-        circle(xAlignment, yAlignment, 4);
-
+        line(0, 0, radiusItem, 0);
+        circle(radiusItem, 0, 4);
+        rotate(-angleDiffOfAlignment);
+        // =====
+        rotate(angleDiffOfCohesion);
         fill(180, 100, 100);
         stroke(180, 100, 100);
-        const xCohesion =
-          item.position.x +
-          radiusItem * cos(angleDiffOfCohesion + item.direction);
-        const yCohesion =
-          item.position.y +
-          radiusItem * sin(angleDiffOfCohesion + item.direction);
-        line(item.position.x, item.position.y, xCohesion, yCohesion);
-        circle(xCohesion, yCohesion, 4);
+        line(0, 0, radiusItem, 0);
+        circle(radiusItem, 0, 4);
         const noop = true;
+        pop();
       }
       if (
         !DISABLE_DRAW_OBJECTS &&
         proximityAlarm &&
         BOID_DRAW_PROXIMITY_ALARM
       ) {
+        push();
         fill(30, 100, 100);
         stroke(0, 100, 100);
-        line(
-          item.position.x,
-          item.position.y,
-          item.position.x + 16 * cos(angleEscape + item.direction),
-          item.position.y + 16 * sin(angleEscape + item.direction)
-        );
-        circle(item.position.x - 8, item.position.y, 4);
+        translate(item.position.x, item.position.y);
+        circle(-radiusItem / 2 - 4, 0, 4);
+        rotate(item.direction);
+        rotate(angleEscape);
+        line(0, 0, radiusItem * 2, 0);
+        pop();
       }
 
       if (!DISABLE_DRAW_OBJECTS) {
+        push();
+        translate(item.position.x, item.position.y);
+        rotate(item.direction);
         fill(item.color);
         stroke(0, 0, 0);
-        circle(item.position.x, item.position.y, radiusItem);
+        circle(0, 0, radiusItem);
         stroke(item.color);
-        line(
-          item.position.x,
-          item.position.y,
-          item.position.x + radiusItem * cosOfMyDir,
-          item.position.y + radiusItem * sinOfMyDir
-        );
+        line(0, 0, 0 + radiusItem, 0);
+        pop();
       }
       if (!DISABLE_DRAW_OBJECTS && DRAW_SENSE_RANGE) {
         noFill();
