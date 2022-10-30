@@ -8,6 +8,7 @@ function getUrlParams() {
   const NUM_BOIDS = urlParams.get("NUM_BOIDS");
   const DISABLE_DRAW_OBJECTS = urlParams.get("DISABLE_DRAW_OBJECTS");
   const DRAW_LINES_TO_NEIGHBORS = urlParams.get("DRAW_LINES_TO_NEIGHBORS");
+  const DRAW_ANGLE_TARGET = urlParams.get("DRAW_ANGLE_TARGET");
   return {
     height: height ? Number(height) : 512,
     width: width ? Number(width) : 512,
@@ -19,6 +20,7 @@ function getUrlParams() {
     NUM_BOIDS: NUM_BOIDS ? Number(NUM_BOIDS) : 128,
     DISABLE_DRAW_OBJECTS: DISABLE_DRAW_OBJECTS !== "0",
     DRAW_LINES_TO_NEIGHBORS: DRAW_LINES_TO_NEIGHBORS !== "0",
+    DRAW_ANGLE_TARGET: DRAW_ANGLE_TARGET !== "0",
   };
 }
 function normalizeAngle(ang) {
@@ -308,10 +310,8 @@ class Boid {
     this.canvas = canvas;
     this.weight = 1 + Math.pow(random(1), 4) * 15;
     this.species = random([1]);
-    this.position = {
-      x: random(canvas.width),
-      y: random(canvas.height),
-    };
+
+    this.position = createVector(random(canvas.width), random(canvas.height));
     colorMode(HSB);
 
     this.color = color(this.species * 4 * 16, 100, 100, 1);
@@ -321,23 +321,25 @@ class Boid {
 const BUTTON_FUNCTIONS = {
   DRAW_GEO_CENTER: {
     text: "DRAW_GEO_CENTER",
-    action: () => (DRAW_GEO_CENTER = !DRAW_GEO_CENTER),
+    action: () => (PARAMS.DRAW_GEO_CENTER = !PARAMS.DRAW_GEO_CENTER),
   },
   DRAW_SENSE_RANGE: {
     text: "DRAW_SENSE_RANGE",
-    action: () => (DRAW_SENSE_RANGE = !DRAW_SENSE_RANGE),
+    action: () => (PARAMS.DRAW_SENSE_RANGE = !PARAMS.DRAW_SENSE_RANGE),
   },
   BOID_DRAW_PROXIMITY_ALARM: {
     text: "BOID_DRAW_PROXIMITY_ALARM",
-    action: () => (BOID_DRAW_PROXIMITY_ALARM = !BOID_DRAW_PROXIMITY_ALARM),
+    action: () =>
+      (PARAMS.BOID_DRAW_PROXIMITY_ALARM = !PARAMS.BOID_DRAW_PROXIMITY_ALARM),
   },
   DRAW_LINES_TO_NEIGHBORS: {
     text: "DRAW_LINES_TO_NEIGHBORS",
-    action: () => (DRAW_LINES_TO_NEIGHBORS = !DRAW_LINES_TO_NEIGHBORS),
+    action: () =>
+      (PARAMS.DRAW_LINES_TO_NEIGHBORS = !PARAMS.DRAW_LINES_TO_NEIGHBORS),
   },
   QUAD_TREE_DRAW_GRID: {
     text: "QUAD_TREE_DRAW_GRID",
-    action: () => (QUAD_TREE_DRAW_GRID = !QUAD_TREE_DRAW_GRID),
+    action: () => (PARAMS.QUAD_TREE_DRAW_GRID = !PARAMS.QUAD_TREE_DRAW_GRID),
   },
   RANDOMIZE_DIRECTIONS: {
     text: "RANDOMIZE_DIRECTIONS()",
@@ -365,8 +367,8 @@ var HEIGHT = WIDTH;
 var QUAD_TREE_DEPTH = 4;
 var BOID_SENSE_RANGE = 64;
 var BOID_RANDOM_TURNS = false;
-const BOID_TURN_RATE = 0.2;
-const BOID_SPEED = 2;
+const BOID_TURN_RATE = 0.3;
+const BOID_SPEED = 1;
 var BOID_SPACING_MINIMUM = 16;
 var NUM_BOIDS = 128;
 
@@ -375,9 +377,11 @@ var frameTimeDebugDrawPrevious = 0;
 var PARAMS;
 var frameTimes = [];
 var DISABLE_DRAW_OBJECTS = false;
-function setup() {
+
+function setup(DRAW_SENSOR_ANGLES) {
   tests();
   const params = getUrlParams();
+  PARAMS = params;
   QUAD_TREE_DEPTH = params.QUAD_TREE_DEPTH;
   NUM_BOIDS = params.NUM_BOIDS;
   DISABLE_DRAW_OBJECTS = params.DISABLE_DRAW_OBJECTS;
@@ -390,8 +394,13 @@ function setup() {
 
   for (var ii = 0; ii < NUM_BOIDS; ii++) {
     const b = new Boid(ii, CANVAS, random() < 0.05);
+    b.weight = 2;
     ITEMS.push(b);
   }
+
+  ITEMS.slice(0, Math.ceil(ITEMS.length / 32)).map((b) => {
+    b.weight = 32;
+  });
 
   for (const key in BUTTON_FUNCTIONS) {
     const o = BUTTON_FUNCTIONS[key];
@@ -408,7 +417,7 @@ function draw() {
   TREE = new QuadTreeNode(null, WIDTH, 0, 0, [], 0);
 
   for (const item of ITEMS) {
-    TREE.insert(item, item.position.x, item.position.y, QUAD_TREE_DEPTH);
+    TREE.insert(item, item.position.x, item.position.y, PARAMS.QUAD_TREE_DEPTH);
   }
 
   // ====== Draw QuadTree node bounds
@@ -416,15 +425,13 @@ function draw() {
   while (queue.length > 0) {
     var currentNode = queue.pop();
     if (!DISABLE_DRAW_OBJECTS && QUAD_TREE_DRAW_GRID) {
+      push();
       noFill();
       // color(255*currentNode.depth/TREE.maxDepth);
       stroke(120, 100, 100, 0.75);
-      rect(
-        currentNode.x,
-        currentNode.y,
-        currentNode.sideLength,
-        currentNode.sideLength
-      );
+      translate(currentNode.x, currentNode.y);
+      rect(0, 0, currentNode.sideLength, currentNode.sideLength);
+      pop();
     }
     // ====== Draw items
     for (const item of currentNode.items) {
@@ -464,9 +471,8 @@ function draw() {
         }
       }
       if (!DISABLE_DRAW_OBJECTS && DRAW_LINES_TO_NEIGHBORS) {
+        stroke(item.color);
         for (const neighbor of neighborsSameSpecies) {
-          stroke(item.color);
-
           line(
             item.position.x,
             item.position.y,
@@ -481,6 +487,12 @@ function draw() {
             item.direction,
             neighbor.direction
           );
+          const distance = dist(
+            item.position.x,
+            item.position.y,
+            neighbor.position.x,
+            neighbor.position.y
+          );
 
           return {
             ...accumulator,
@@ -494,6 +506,10 @@ function draw() {
               accumulator.sumWeightedNeighborY +
               neighbor.position.y * neighbor.weight,
             sumNeighborWeight: accumulator.sumNeighborWeight + neighbor.weight,
+            distanceClosest:
+              accumulator.distanceClosest === null
+                ? distance
+                : Math.min(distance, accumulator.distanceClosest),
           };
         },
         {
@@ -503,50 +519,65 @@ function draw() {
           sumWeightedNeighborX: 0,
           sumWeightedNeighborY: 0,
           sumNeighborWeight: 0,
+          distanceClosest: null,
+          closest: null,
         }
       );
+      const proximityAlarm =
+        neighborClosest &&
+        neighborInfo.distanceClosest &&
+        neighborInfo.distanceClosest < BOID_SPACING_MINIMUM;
 
       const geoCenter = {
         x:
           neighborsSameSpecies.length === 0
             ? item.position.x
             : neighborInfo.sumWeightedNeighborX /
-              neighborInfo.sumNeighborWeight,
+            neighborInfo.sumNeighborWeight,
         y:
           neighborsSameSpecies.length === 0
             ? item.position.y
             : neighborInfo.sumWeightedNeighborY /
-              neighborInfo.sumNeighborWeight,
+            neighborInfo.sumNeighborWeight,
       };
 
       const angleDiffOfAlignment =
-        neighborsSameSpecies.length === 0
+        neighborsSameSpecies.length === 0 || proximityAlarm
           ? 0
           : neighborInfo.sumDiffDirection / neighborsSameSpecies.length;
       const angleToGeoCenter = atan2(
         geoCenter.y - item.position.y,
         geoCenter.x - item.position.x
       );
-      const angleDiffOfCohesion = minimumAngleBetween(
-        item.direction,
-        angleToGeoCenter
+      const angleDiffOfCohesion =
+        neighborsSameSpecies.length === 0 || proximityAlarm
+          ? 0
+          : minimumAngleBetween(item.direction, angleToGeoCenter);
+      const distToGeoCenter = dist(
+        item.position.x,
+        item.position.y,
+        geoCenter.x,
+        geoCenter.y
       );
-      const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
+      // const alignmentSpeedMultiplier = 1 - Math.abs(angleDiffOfAlignment) / PI;
+      const alignmentSpeedMultiplier =
+        distToGeoCenter === 0
+          ? BOID_SPEED
+          : Math.min(
+            BOID_SPEED * 6,
+            BOID_SPEED / (Math.max(1, distToGeoCenter) / BOID_SENSE_RANGE)
+          );
       // const alignmentSpeedMultiplier = 1;
       // turn to get away from nearest boid
 
-      const proximityAlarm =
-        neighborClosest &&
-        distNeighborClosest &&
-        distNeighborClosest <= BOID_SPACING_MINIMUM;
       const angleEscapeProjectionDifferential = proximityAlarm
         ? minimumAngleBetween(
-            item.direction,
-            atan2(
-              neighborClosest.position.y - item.position.y,
-              neighborClosest.position.x - item.position.x
-            )
+          item.direction,
+          atan2(
+            neighborClosest.position.y - item.position.y,
+            neighborClosest.position.x - item.position.x
           )
+        )
         : item.direction;
       const angleEscapeActualDifferential =
         PI - Math.abs(angleEscapeProjectionDifferential) < 0.1
@@ -567,7 +598,7 @@ function draw() {
         (Math.abs(angleDiffToTarget) < turnAllowance
           ? signAngleDiffToTarget * angleDiffToTarget
           : signAngleDiffToTarget * turnAllowance) /
-          item.weight;
+        item.weight;
 
       item.direction = myNewAngleThisFrame;
 
@@ -601,67 +632,70 @@ function draw() {
         item.direction = item.direction % TWO_PI;
       }
       // ==== END normalize boid vars
-      const boidRadius = 4 * Math.pow(item.weight, 0.5);
-      if (DRAW_GEO_CENTER) {
-        // draw line to the point this boid is escaping
-        fill(80, 0, 100);
-        stroke(80, 0, 100);
-        line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
-        circle(geoCenter.x, geoCenter.y, 4);
-      }
-      if (DRAW_ALIGNMENT_ANGLE) {
-        fill(120, 100, 100);
-        stroke(120, 100, 100);
-        const xAlignment =
-          item.position.x +
-          boidRadius * cos(angleDiffOfAlignment + item.direction);
-        const yAlignment =
-          item.position.y +
-          boidRadius * sin(angleDiffOfAlignment + item.direction);
-        line(item.position.x, item.position.y, xAlignment, yAlignment);
-        circle(xAlignment, yAlignment, 4);
+      const radiusItem = 8 * Math.pow(item.weight, 0.5);
+      if (!PARAMS.DISABLE_DRAW_OBJECTS) {
+        if (PARAMS.DRAW_ANGLE_TARGET) {
+          push();
+          translate(item.position.x, item.position.y);
+          rotate(angleDiffToTarget + item.direction);
+          stroke(300, 100, 100);
+          line(0, 0, radiusItem * 2, 0);
+          pop();
+        }
+        if (PARAMS.DRAW_GEO_CENTER) {
+          // draw line to the point this boid is escaping
+          push();
+          fill(80, 0, 100);
+          stroke(80, 0, 100);
 
-        fill(180, 100, 100);
-        stroke(180, 100, 100);
-        const xCohesion =
-          item.position.x +
-          boidRadius * cos(angleDiffOfCohesion + item.direction);
-        const yCohesion =
-          item.position.y +
-          boidRadius * sin(angleDiffOfCohesion + item.direction);
-        line(item.position.x, item.position.y, xCohesion, yCohesion);
-        circle(xCohesion, yCohesion, 4);
-        const noop = true;
-      }
-      if (
-        !DISABLE_DRAW_OBJECTS &&
-        proximityAlarm &&
-        BOID_DRAW_PROXIMITY_ALARM
-      ) {
-        fill(30, 100, 100);
-        stroke(0, 100, 100);
-        line(
-          item.position.x,
-          item.position.y,
-          item.position.x + 16 * cos(angleEscape + item.direction),
-          item.position.y + 16 * sin(angleEscape + item.direction)
-        );
-        circle(item.position.x - 8, item.position.y, 4);
+          line(item.position.x, item.position.y, geoCenter.x, geoCenter.y);
+          circle(geoCenter.x, geoCenter.y, 4);
+          pop();
+        }
+        if (PARAMS.DRAW_ALIGNMENT_ANGLE) {
+          push();
+          translate(item.position.x, item.position.y);
+          rotate(item.direction);
+          rotate(angleDiffOfAlignment);
+          fill(120, 100, 100);
+          stroke(120, 100, 100);
+          line(0, 0, radiusItem, 0);
+          circle(radiusItem, 0, 4);
+          rotate(-angleDiffOfAlignment);
+          // =====
+          rotate(angleDiffOfCohesion);
+          fill(180, 100, 100);
+          stroke(180, 100, 100);
+          line(0, 0, radiusItem, 0);
+          circle(radiusItem, 0, 4);
+          const noop = true;
+          pop();
+        }
+        if (proximityAlarm && PARAMS.BOID_DRAW_PROXIMITY_ALARM) {
+          push();
+          fill(30, 100, 100);
+          stroke(0, 100, 100);
+          translate(item.position.x, item.position.y);
+          circle(-radiusItem / 2 - 4, 0, 4);
+          rotate(item.direction);
+          rotate(angleEscape);
+          line(0, 0, radiusItem * 2, 0);
+          pop();
+        }
       }
 
-      if (!DISABLE_DRAW_OBJECTS) {
+      if (!PARAMS.DISABLE_DRAW_OBJECTS) {
+        push();
+        translate(item.position.x, item.position.y);
+        rotate(item.direction);
         fill(item.color);
         stroke(0, 0, 0);
-        circle(item.position.x, item.position.y, boidRadius);
+        circle(0, 0, radiusItem);
         stroke(item.color);
-        line(
-          item.position.x,
-          item.position.y,
-          item.position.x + boidRadius * cosOfMyDir,
-          item.position.y + boidRadius * sinOfMyDir
-        );
+        line(0, 0, 0 + radiusItem, 0);
+        pop();
       }
-      if (!DISABLE_DRAW_OBJECTS && DRAW_SENSE_RANGE) {
+      if (!PARAMS.DISABLE_DRAW_OBJECTS && PARAMS.DRAW_SENSE_RANGE) {
         noFill();
         stroke(
           hue(item.color),
