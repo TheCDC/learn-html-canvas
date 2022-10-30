@@ -1,8 +1,8 @@
 var WIDTH = 300;
 var HEIGHT = 300;
 var CELLSIZE = 10;
-var SIMWIDTH = 30;
-var SIMHEIGHT = 30;
+var SIMWIDTH = 64;
+var SIMHEIGHT = 64;
 
 
 var CHANCE_PARTICLE_STATIC = 0.01;
@@ -14,10 +14,10 @@ function hexToRgb(hex) {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      }
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    }
     : null;
 }
 
@@ -33,7 +33,6 @@ class Simulation {
     for (var i = 0; i < this.width; i++) {
       this.matrix[0][i] = Math.random();
     }
-    console.log(this.matrix[0]);
   }
   step() {
     for (var y = 0; y < this.width; y++) {
@@ -47,14 +46,14 @@ class Simulation {
             this.matrix[y][x] += this.matrix[y - 1][x];
           } else {
             //decaying brightness
-            if (x > 1) {
-              this.matrix[y][x] += this.matrix[y - 1][x - 1] / 3;
-            }
-            this.matrix[y][x] += this.matrix[y - 1][x] / 2;
-            if (x < this.width - 2) {
-              this.matrix[y][x] += this.matrix[y - 1][x + 1] / 3;
-            }
-            this.matrix[y][x] /= 2.5;
+            const value_self = this.matrix[y][x]
+            const value_down_left = (x > 1 ? this.matrix[y - 1][x - 1] : 0)
+            const value_left = (x > 1 ? this.matrix[y][x - 1] : 0)
+            const value_down_right = ((x < this.width - 2) ? this.matrix[y - 1][x + 1] : 0)
+            const value_right = ((x < this.width - 2) ? this.matrix[y][x + 1] : 0)
+            const value_down = this.matrix[y - 1][x]
+            const sum_brightness = (value_self + value_down_left + value_down_right + value_down + value_left + value_right) / (6 + Math.random() / 2)
+            this.matrix[y][x] = sum_brightness
             if (Math.random() < CHANCE_PARTICLE_SUSTAIN) {
               this.matrix[y][x] = this.matrix[y - 1][x];
             }
@@ -80,9 +79,8 @@ function drawSimulation(ctx, sim) {
     for (var x = 0; x < sim.width; x++) {
       var alpha = sim.matrix[y][x];
 
-      ctx.fillStyle = `rgb(${PARTICLE_COLOR['r']},${PARTICLE_COLOR['g']},${
-        PARTICLE_COLOR['b']
-      },${alpha})`;
+      ctx.fillStyle = `rgb(${PARTICLE_COLOR['r']},${PARTICLE_COLOR['g']},${PARTICLE_COLOR['b']
+        },${alpha})`;
       ctx.fillRect(x * CELLSIZE, HEIGHT - y * CELLSIZE, CELLSIZE, CELLSIZE);
     }
   }
@@ -92,9 +90,9 @@ function startDrawing() {
   var url = new URL(window.location);
   var w = url.searchParams.get("width");
   var h = url.searchParams.get("height");
-  var width = w? w:SIMWIDTH
-  var height = h? h:SIMHEIGHT
-  console.log('width=',w,' height=',h)
+  var width = w ? w : SIMWIDTH
+  var height = h ? h : SIMHEIGHT
+  console.log('width=', w, ' height=', h)
 
   var sim = new Simulation(width, height);
   var canvas = document.getElementById("myCanvas");
@@ -120,13 +118,13 @@ function startDrawing() {
 
   if (canvas.getContext) {
     var ctx = canvas.getContext("2d");
-    ctx.canvas.width = width*CELLSIZE;
-    ctx.canvas.height = height*CELLSIZE;
+    ctx.canvas.width = width * CELLSIZE;
+    ctx.canvas.height = height * CELLSIZE;
     setInterval(() => {
       sim.step();
       drawSimulation(ctx, sim);
       //   draw(ctx);
-    }, 50);
+    }, 30);
   } else {
     console.log("Browser does not support canvas???");
   }
