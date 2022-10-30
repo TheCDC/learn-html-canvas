@@ -443,6 +443,7 @@ function draw() {
         // find closest neighbor
         neighborClosest = neighborsAll[0];
         distNeighborClosest = dist(
+          //initialize
           item.position.x,
           item.position.y,
           neighborsAll[0].position.x,
@@ -537,7 +538,7 @@ function draw() {
       const proximityAlarm =
         neighborClosest &&
         distNeighborClosest &&
-        distNeighborClosest < BOID_SPACING_MINIMUM;
+        distNeighborClosest <= BOID_SPACING_MINIMUM;
       const angleEscapeProjectionDifferential = proximityAlarm
         ? minimumAngleBetween(
             item.direction,
@@ -555,7 +556,7 @@ function draw() {
       // is this boid escaping or aligning?
       const angleDiffToTarget = proximityAlarm
         ? angleEscape
-        : angleDiffOfAlignment * 0.8 + angleDiffOfCohesion * 0.2;
+        : angleDiffOfAlignment * 0.5 + angleDiffOfCohesion * 0.5;
       const myTurnRate = proximityAlarm ? BOID_TURN_RATE * 2 : BOID_TURN_RATE;
 
       const turnAllowance = myTurnRate; //* (1 - Math.abs(angleDiffOfAlignment) / PI);
@@ -578,8 +579,7 @@ function draw() {
       const cosOfMyDir = cos(item.direction);
       const sinOfMyDir = sin(item.direction);
 
-      const mySpeedThisFrame =
-        BOID_SPEED * 0.5 * (1 + alignmentSpeedMultiplier);
+      const mySpeedThisFrame = BOID_SPEED * alignmentSpeedMultiplier;
       item.position.x += mySpeedThisFrame * cosOfMyDir;
       item.position.y += mySpeedThisFrame * sinOfMyDir;
       // ==== BEGIN normalize boid vars
@@ -601,7 +601,7 @@ function draw() {
         item.direction = item.direction % TWO_PI;
       }
       // ==== END normalize boid vars
-      const radiusItem = 8 * Math.pow(item.weight, 0.5);
+      const boidRadius = 4 * Math.pow(item.weight, 0.5);
       if (DRAW_GEO_CENTER) {
         // draw line to the point this boid is escaping
         fill(80, 0, 100);
@@ -614,10 +614,10 @@ function draw() {
         stroke(120, 100, 100);
         const xAlignment =
           item.position.x +
-          radiusItem * cos(angleDiffOfAlignment + item.direction);
+          boidRadius * cos(angleDiffOfAlignment + item.direction);
         const yAlignment =
           item.position.y +
-          radiusItem * sin(angleDiffOfAlignment + item.direction);
+          boidRadius * sin(angleDiffOfAlignment + item.direction);
         line(item.position.x, item.position.y, xAlignment, yAlignment);
         circle(xAlignment, yAlignment, 4);
 
@@ -625,10 +625,10 @@ function draw() {
         stroke(180, 100, 100);
         const xCohesion =
           item.position.x +
-          radiusItem * cos(angleDiffOfCohesion + item.direction);
+          boidRadius * cos(angleDiffOfCohesion + item.direction);
         const yCohesion =
           item.position.y +
-          radiusItem * sin(angleDiffOfCohesion + item.direction);
+          boidRadius * sin(angleDiffOfCohesion + item.direction);
         line(item.position.x, item.position.y, xCohesion, yCohesion);
         circle(xCohesion, yCohesion, 4);
         const noop = true;
@@ -652,13 +652,13 @@ function draw() {
       if (!DISABLE_DRAW_OBJECTS) {
         fill(item.color);
         stroke(0, 0, 0);
-        circle(item.position.x, item.position.y, radiusItem);
+        circle(item.position.x, item.position.y, boidRadius);
         stroke(item.color);
         line(
           item.position.x,
           item.position.y,
-          item.position.x + radiusItem * cosOfMyDir,
-          item.position.y + radiusItem * sinOfMyDir
+          item.position.x + boidRadius * cosOfMyDir,
+          item.position.y + boidRadius * sinOfMyDir
         );
       }
       if (!DISABLE_DRAW_OBJECTS && DRAW_SENSE_RANGE) {
